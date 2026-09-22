@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import productImages from "../data/seed/product_images.json";
 import { presetById, thresholdsFromPreset } from "../data/presets";
 import { enough } from "./enough";
+import { whyLine } from "./why";
 import { catalogImage } from "./images";
 import { CSV_HEADERS, loadSeed, parseCsv, productFromRow, seedPath } from "./seed";
 
@@ -134,9 +134,29 @@ test("ranges are the considered catalog and blank photos stay blank", () => {
     assert.equal(span.winner, winner.attrs[key]?.value);
   }
   assert.equal(result.same_price_count, 2);
-  assert.equal(catalogImage(productImages as Record<string, string>, "earfun-wave-pro"), null);
-  assert.equal(catalogImage({ sku: "  " }, "sku"), null);
+  assert.equal(result.ranges.battery_hours?.low, 24);
+  assert.equal(result.ranges.battery_hours?.high, 65);
+  assert.equal(result.ranges.weight_g?.low, 193);
+  assert.equal(result.ranges.weight_g?.high, 296);
+  assert.equal(result.image_url, null);
+  assert.ok(result.fail_reasons.includes("missing cited ANC"));
+  const why = whyLine(result);
+  assert.match(why, /^Cheapest that cleared every required bar/);
+  assert.match(why, /Edifier WH700NB/);
+  assert.match(why, /TOZO HT2/);
+  assert.match(why, /missing cited ANC/);
+  assert.equal(why.replace(/\.$/, "").includes("."), false);
+  const withPhoto = productFromRow({
+    sku_id: "photo",
+    name: "Photo",
+    brand: "Photo",
+    image_url: "https://cdn.example/earfun.jpg",
+    anc_quality_cite_url: "   ",
+    anc_as_of: "2026-09-21",
+  });
+  assert.equal(withPhoto.image_url, "https://cdn.example/earfun.jpg");
+  assert.equal(productFromRow({ sku_id: "blank", name: "Blank", brand: "Blank", image_url: " " }).image_url, null);
+  assert.equal(productFromRow({ sku_id: "none", name: "None", brand: "None" }).image_url, null);
   assert.equal(catalogImage({ sku: "javascript:alert(1)" }, "sku"), null);
-  assert.equal(catalogImage({ sku: "https://cdn.example/earfun.jpg" }, "sku"), "https://cdn.example/earfun.jpg");
   assert.equal(catalogImage({ sku: "/catalog/earfun-wave-pro.jpg" }, "sku"), "/catalog/earfun-wave-pro.jpg");
 });

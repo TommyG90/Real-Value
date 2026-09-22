@@ -52,7 +52,7 @@ The file is the validated 23-SKU catalog. Every row has the must-have attributes
 
 ## Photos
 
-`data/seed/product_images.json` maps each `sku_id` to an image URL. The CSV headers stay as Engineering locked them. A blank value means Data has not supplied a photo, and the results page shows a placeholder. Fill a value with an `https://` URL, or a file under `public/` such as `/catalog/earfun-wave-pro.jpg`, only when that file is a real product photo. Do not add stock or invented images.
+The CSV may include an optional `image_url` column. It is not a must-have, and the locked header list does not require it. A missing or blank cell shows initials and “No photo”. A value must be an `https://` URL or a path under `public/` such as `/catalog/earfun-wave-pro.jpg`, and only when that file is a real product photo. Do not add stock or invented images. `anc_quality_cite_url`, when present, is a “lab cite” link. It is never shown as a numeric ANC score.
 
 Apply the schema, then load the CSV and presets:
 
@@ -69,7 +69,7 @@ Without those variables the script only validates the CSV. With them it upserts 
 
 `enough(job, thresholds)` in `lib/enough.ts` is the only decision function. The page calls it through the `decide` server action.
 
-The record still has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects`, and `provenance`. The results screen does not print that record, the source URLs, or the `as_of` dates. Battery and weight ranges are the low and high of the pairs that were considered.
+The record still has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects`, and `provenance`. The results screen does not print that record or the `as_of` dates. A discreet “Copy structured result” control copies it. Battery and weight ranges are the low and high of the pairs that were considered.
 
 The browser logs `session_started`, `thresholds_changed`, and `result_shown`.
 

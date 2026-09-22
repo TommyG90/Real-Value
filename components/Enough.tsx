@@ -3,8 +3,9 @@
 import { useEffect, useState, useTransition } from "react";
 import { decide } from "@/app/actions";
 import { emptyThresholds, presets, thresholdsFromPreset } from "@/data/presets";
+import { whyLine } from "@/lib/why";
 import { track } from "@/lib/track";
-import type { CatalogSpan, EnoughOutcome, JobPreset, SoftDefaults, Thresholds } from "@/lib/types";
+import type { CatalogSpan, EnoughOutcome, EnoughRecord, JobPreset, SoftDefaults, Thresholds } from "@/lib/types";
 
 function money(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -211,13 +212,7 @@ export function Enough() {
       )}
 
       {step === "result" && result && preset && (
-        <Result
-          preset={preset}
-          result={result}
-          thresholds={thresholds}
-          soft={soft}
-          onEdit={() => setStep("bars")}
-        />
+        <Result preset={preset} result={result} onEdit={() => setStep("bars")} />
       )}
     </main>
   );
@@ -226,19 +221,14 @@ export function Enough() {
 function Result({
   preset,
   result,
-  thresholds,
-  soft,
   onEdit,
 }: {
   preset: JobPreset;
   result: EnoughOutcome;
-  thresholds: Thresholds;
-  soft: { on: string[]; off: string[] };
   onEdit: () => void;
 }) {
   const winner = result.record.winner;
-  const missed = result.eligible - result.cleared;
-  const cheaper = result.record.cheaper_rejects;
+  const cite = citeHref(result);
 
   return (
     <section className="result">
@@ -249,177 +239,136 @@ function Result({
         <p className="meta">{preset.name}</p>
       </div>
 
-      {winner ? (
-        <article className="hero">
-          <ProductPhoto name={winner.name} url={result.images?.[winner.id] ?? null} size="hero" />
-          <p className="kicker">Enough for {preset.name}</p>
-          <h1>{winner.name}</h1>
-          <p className="price">{money(winner.price)}</p>
-          <p className="why">{decisionWhy(result)}</p>
-        </article>
-      ) : (
-        <article className="hero empty">
-          <p className="kicker">Nothing cleared the bar</p>
-          <h1>No pair was enough</h1>
-          <p className="why">No pair met every must-have. Loosen a bar, or leave a number blank to turn it off.</p>
-        </article>
-      )}
+      <article className={winner ? "hero" : "hero empty"}>
+        {winner ? (
+          <ProductPhoto name={winner.name} url={result.image_url} />
+        ) : null}
+        <p className="kicker">{winner ? "Enough" : "Nothing cleared the bar"}</p>
+        <h1>{winner ? winner.name : "No pair was enough"}</h1>
+        {winner && <p className="price">{money(winner.price)}</p>}
+        <p className="why">{whyLine(result)}</p>
+        {cite && (
+          <a className="cite" href={cite}>
+            lab cite
+          </a>
+        )}
+      </article>
 
-      <dl className="pool">
-        <div>
-          <dt>Considered</dt>
-          <dd>{result.eligible}</dd>
-        </div>
-        <div>
-          <dt>Cleared</dt>
-          <dd>{result.cleared}</dd>
-        </div>
-        <div>
-          <dt>Missed</dt>
-          <dd>{missed}</dd>
-        </div>
-      </dl>
-      <p className="hint pool-note">{barSummary(thresholds)}</p>
-      {result.excluded_ids.length > 0 && (
-        <p className="hint">
-          {result.excluded_ids.length === 1
-            ? "1 pair was left out because a must-have spec was missing."
-            : `${result.excluded_ids.length} pairs were left out because a must-have spec was missing.`}
-        </p>
+      <p className="pool-line">
+        {result.eligible} considered · {result.cleared} cleared the bar
+      </p>
+      {result.fail_reasons.length > 0 && (
+        <p className="hint">Didn’t clear: {result.fail_reasons.join(" / ")}</p>
       )}
 
       {(result.ranges.battery_hours || result.ranges.weight_g) && (
         <section className="spans">
-          <h2>In this catalog</h2>
-          <p className="hint">Low and high are the pairs that were considered. The mark is this pick.</p>
           {result.ranges.battery_hours && (
-            <SpanBar label="Battery" unit="h" span={result.ranges.battery_hours} sense="longer" />
+            <SpanBar
+              label="Battery"
+              unit="h"
+              span={result.ranges.battery_hours}
+              catalogSize={result.eligible}
+            />
           )}
           {result.ranges.weight_g && (
-            <SpanBar label="Weight" unit="g" span={result.ranges.weight_g} sense="heavier" />
+            <SpanBar
+              label="Weight"
+              unit="g"
+              span={result.ranges.weight_g}
+              catalogSize={result.eligible}
+            />
           )}
         </section>
       )}
 
-      <h2>{winner ? "Cheaper pairs that missed" : "What missed"}</h2>
-      {cheaper.length === 0 ? (
-        <p className="lede">
-          {winner ? "No cheaper pair missed the bar." : "No considered pair missed a bar."}
-        </p>
-      ) : (
-        <ul className="rejects">
-          {cheaper.map((reject) => (
-            <li key={reject.id} className="reject">
-              <ProductPhoto name={reject.name} url={result.images?.[reject.id] ?? null} size="thumb" />
-              <div>
-                <header>
-                  <strong>{reject.name}</strong>
-                  <span>{money(reject.price)}</span>
-                </header>
-                {reject.failed_bars.map((bar) => (
-                  <p key={bar.key}>{bar.message}</p>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      {winner && missed > cheaper.length && (
-        <p className="hint">
-          {cheaper.length === 0
-            ? "Other pairs missed and cost the same or more."
-            : "Other pairs also missed. They cost the same or more, so they were not a cheaper way through."}
-        </p>
-      )}
-
-      {(soft.on.length > 0 || soft.off.length > 0) && (
-        <aside className="soft">
-          <strong>Nice to have</strong>
-          <p>Shown for context. They did not decide this pick.</p>
-          {soft.on.length > 0 && <p>On: {soft.on.join(", ")}</p>}
-          {soft.off.length > 0 && <p>Off: {soft.off.join(", ")}</p>}
-        </aside>
-      )}
+      <CopyResult record={result.record} />
     </section>
   );
 }
 
-function decisionWhy(result: EnoughOutcome): string {
-  if (!result.record.winner) return "No pair met every must-have.";
-  if (result.same_price_count > 1) {
-    return `The cheapest price that met every must-have. ${result.same_price_count} pairs tie at this price, so the earlier catalog id is shown.`;
-  }
-  return "The cheapest pair that met every must-have.";
+function citeHref(result: EnoughOutcome): string | null {
+  const entry = result.record.provenance.find((item) => item.attr_key === "anc_quality_cite_url");
+  if (!entry || typeof entry.value !== "string") return null;
+  const url = entry.value.trim();
+  if (url.startsWith("https://") || url.startsWith("http://")) return url;
+  return null;
 }
 
-function ProductPhoto({
-  name,
-  url,
-  size,
-}: {
-  name: string;
-  url: string | null;
-  size: "hero" | "thumb";
-}) {
-  const className = size === "hero" ? "photo photo-hero" : "photo photo-thumb";
+function ProductPhoto({ name, url }: { name: string; url: string | null }) {
   if (url) {
-    return <img className={className} src={url} alt="" />;
+    return <img className="photo photo-hero" src={url} alt="" />;
   }
   return (
-    <div className={`${className} placeholder`} role="img" aria-label={`No catalog photo for ${name}`}>
-      <HeadphoneMark />
-      {size === "hero" && <span>No catalog photo yet</span>}
+    <div className="photo photo-hero placeholder" role="img" aria-label={`No photo for ${name}`}>
+      <strong>{initials(name)}</strong>
+      <span>No photo</span>
     </div>
   );
 }
 
-function HeadphoneMark() {
-  return (
-    <svg viewBox="0 0 64 64" aria-hidden="true">
-      <path
-        d="M12 34v-6a20 20 0 0 1 40 0v6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      <rect x="8" y="32" width="10" height="18" rx="3" fill="currentColor" />
-      <rect x="46" y="32" width="10" height="18" rx="3" fill="currentColor" />
-    </svg>
-  );
+function initials(name: string): string {
+  const words = name
+    .replace(/[^A-Za-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const letters = words.map((word) => word[0]).slice(0, 2);
+  return letters.join("").toUpperCase() || "—";
 }
 
 function SpanBar({
   label,
   unit,
   span,
-  sense,
+  catalogSize,
 }: {
   label: string;
   unit: string;
   span: CatalogSpan;
-  sense: string;
+  catalogSize: number;
 }) {
   const width = span.high - span.low;
   const pct = width === 0 ? 50 : ((span.winner - span.low) / width) * 100;
-  const caption = `${label} ${formatStat(span.winner)} ${unit}. Among the pairs considered, the range is ${formatStat(span.low)} to ${formatStat(span.high)} ${unit}.`;
+  const caption = `${label} ${formatStat(span.winner)} ${unit}. In our catalog of ${catalogSize}, the range is ${formatStat(span.low)} to ${formatStat(span.high)}.`;
   return (
     <div className="span">
       <div className="span-top">
         <span>{label}</span>
-        <strong>
-          {formatStat(span.winner)} {unit}
-        </strong>
+        <span>in our catalog of {catalogSize}</span>
       </div>
       <div className="track" role="img" aria-label={caption}>
-        <span className="marker" style={{ left: `${pct}%` }} />
+        <span className="tick tick-start" />
+        <span className="tick tick-end" />
+        <span className="marker" style={{ left: `${pct}%` }}>
+          <span className="mark-value">
+            {formatStat(span.winner)} {unit}
+          </span>
+        </span>
       </div>
       <div className="span-ends">
         <span>{formatStat(span.low)}</span>
-        <span>{sense}</span>
         <span>{formatStat(span.high)}</span>
       </div>
     </div>
+  );
+}
+
+function CopyResult({ record }: { record: EnoughRecord }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(record, null, 2));
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <button className="copy" type="button" onClick={copy}>
+      {copied ? "Copied" : "Copy structured result"}
+    </button>
   );
 }
 

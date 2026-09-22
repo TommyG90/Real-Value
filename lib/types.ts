@@ -74,6 +74,8 @@ export type Product = {
   brand: string;
   asin: string | null;
   bestbuy_sku: string | null;
+  /** Optional CSV column. Blank stays null. Not a pass/fail field. */
+  image_url: string | null;
   price: {
     street_price_usd: number;
     source: string;
@@ -126,6 +128,8 @@ export type EnoughOutcome = {
   };
   /** Passers at the winner's price, including the winner. 0 when nothing clears. */
   same_price_count: number;
-  /** Display-only. Blank catalog photos are null. Not a pass/fail field. */
-  images?: Record<string, string | null>;
+  /** Winner photo from an optional image_url column. Null when blank or absent. */
+  image_url: string | null;
+  /** Short labels for bars that rejected at least one considered pair, most common first. */
+  fail_reasons: string[];
 };

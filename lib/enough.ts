@@ -8,6 +8,7 @@ import {
   type Thresholds,
 } from "@/lib/types";
 import { missingMustHaves } from "@/lib/seed";
+import { FAIL_LABELS } from "@/lib/why";
 
 type BarKey =
   | "max_price_usd"
@@ -269,7 +270,25 @@ export function enough(
       weight_g: span(eligible, "weight_g", winner),
     },
     same_price_count,
+    image_url: winner?.image_url ?? null,
+    fail_reasons: failReasons(judged),
   };
+}
+
+function failReasons(judged: Array<{ failed: FailedBar[] }>): string[] {
+  const counts = new Map<string, number>();
+  for (const item of judged) {
+    for (const key of new Set(item.failed.map((bar) => bar.key))) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort(
+      (a, b) =>
+        b[1] - a[1] ||
+        BAR_ORDER.indexOf(a[0] as BarKey) - BAR_ORDER.indexOf(b[0] as BarKey),
+    )
+    .map(([key]) => FAIL_LABELS[key] ?? key);
 }
 
 function span(

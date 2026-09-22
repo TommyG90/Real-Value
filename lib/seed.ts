@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { catalogImage } from "@/lib/images";
 import { MUST_HAVE_ATTRS, type Attr, type AttrKey, type Product } from "@/lib/types";
 
 const BOOLEAN_ATTRS = new Set<AttrKey>([
@@ -173,6 +174,7 @@ export function productFromRow(row: Record<string, string>): Product {
     brand: row.brand,
     asin: row.asin || null,
     bestbuy_sku: row.bestbuy_sku || null,
+    image_url: catalogImage({ image: row.image_url ?? "" }, "image"),
     price:
       price === null || !row.street_price_source || !row.street_price_as_of
         ? null
