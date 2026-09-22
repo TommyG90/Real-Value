@@ -1,0 +1,64 @@
+[
+  {
+    "id": "commute",
+    "name": "Commute ANC",
+    "blurb": "Noise cancelling on the train. Foldable is nice, not required.",
+    "required": {
+      "anc": true,
+      "bluetooth": true,
+      "battery_hours_min": 20,
+      "weight_g_max": 300,
+      "warranty_years_min": 1
+    },
+    "soft": {
+      "foldable": true,
+      "call_mic": false,
+      "wired_3_5mm": false
+    },
+    "default_max_usd": 200
+  },
+  {
+    "id": "wfh",
+    "name": "WFH calls",
+    "blurb": "A mic you can take a call on. ANC and a lighter pair are nice.",
+    "required": {
+      "call_mic": true,
+      "bluetooth": true,
+      "battery_hours_min": 20,
+      "warranty_years_min": 1
+    },
+    "soft": {
+      "anc": true,
+      "weight_g_max": 320,
+      "foldable": false,
+      "wired_3_5mm": false
+    },
+    "default_max_usd": 250
+  },
+  {
+    "id": "travel",
+    "name": "Travel",
+    "blurb": "ANC, folds, and a wired jack for the plane. Lighter is nice.",
+    "required": {
+      "anc": true,
+      "foldable": true,
+      "wired_3_5mm": true,
+      "bluetooth": true,
+      "battery_hours_min": 30,
+      "warranty_years_min": 1
+    },
+    "soft": {
+      "weight_g_max": 280,
+      "call_mic": false
+    },
+    "default_max_usd": 300
+  },
+  {
+    "id": "custom",
+    "name": "Custom",
+    "blurb": "Every must-have starts empty. Turn on only the bars you mean.",
+    "required": {},
+    "soft": {},
+    "default_max_usd": null
+  }
+]

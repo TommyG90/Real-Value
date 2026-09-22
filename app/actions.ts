@@ -1,9 +1,9 @@
 "use server";
 
-import { catalog } from "@/data/catalog";
 import { presetById } from "@/data/presets";
 import { enough } from "@/lib/enough";
-import type { EnoughResult, JobId, Thresholds } from "@/lib/types";
+import { loadSeed } from "@/lib/seed";
+import type { EnoughOutcome, Thresholds } from "@/lib/types";
 
 function finiteOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
@@ -17,13 +17,11 @@ function boolOrNull(value: unknown): boolean | null {
 }
 
 export async function decide(input: {
-  jobId: JobId;
+  jobId: string;
   thresholds: Thresholds;
-}): Promise<EnoughResult> {
+}): Promise<EnoughOutcome> {
   const preset = presetById(input.jobId);
-  if (!preset) {
-    throw new Error("Unknown job");
-  }
+  if (!preset) throw new Error("Unknown job");
 
   const thresholds: Thresholds = {
     anc: boolOrNull(input.thresholds.anc),
@@ -37,24 +35,9 @@ export async function decide(input: {
     max_price_usd: finiteOrNull(input.thresholds.max_price_usd),
   };
 
-  const result = enough(
-    {
-      job: { id: preset.id, label: preset.label, soft: preset.soft },
-      thresholds,
-    },
-    catalog,
-  );
-
-  console.info(
-    JSON.stringify({
-      event: "enough_decision",
-      job: preset.id,
-      winner: result.record.winner?.id ?? null,
-      price: result.record.price?.amount_usd ?? null,
-      cleared: result.cleared,
-      rejects: result.record.rejects.length,
-    }),
-  );
-
-  return result;
+  const seed = loadSeed();
+  return enough({ id: preset.id, name: preset.name }, thresholds, [
+    ...seed.eligible,
+    ...seed.excluded,
+  ]);
 }

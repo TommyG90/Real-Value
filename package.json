@@ -5,9 +5,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "tsx --test lib/enough.test.ts"
+    "test": "tsx --test lib/enough.test.ts",
+    "load-seed": "tsx scripts/load-seed.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "next": "^15.5.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

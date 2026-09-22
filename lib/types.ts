@@ -1,4 +1,3 @@
-/** Must-have bars. Null means the bar is off and cannot pass or fail a SKU. */
 export type Thresholds = {
   anc: boolean | null;
   bluetooth: boolean | null;
@@ -11,61 +10,70 @@ export type Thresholds = {
   max_price_usd: number | null;
 };
 
-/** Shown with the job. Never used to pass or fail in v1. */
-export type SoftPrefs = {
+export type RequiredThresholds = {
   anc?: boolean;
+  bluetooth?: boolean;
+  call_mic?: boolean;
+  wired_3_5mm?: boolean;
+  foldable?: boolean;
+  battery_hours_min?: number;
+  weight_g_max?: number;
+  warranty_years_min?: number;
+};
+
+export type SoftDefaults = {
+  anc?: boolean;
+  bluetooth?: boolean;
   call_mic?: boolean;
   wired_3_5mm?: boolean;
   foldable?: boolean;
   weight_g_max?: number;
 };
 
-export type JobId = "commute" | "wfh" | "travel" | "custom";
-
 export type JobPreset = {
-  id: JobId;
-  label: string;
-  summary: string;
-  thresholds: Thresholds;
-  soft: SoftPrefs;
+  id: string;
+  name: string;
+  blurb: string;
+  required: RequiredThresholds;
+  soft: SoftDefaults;
+  default_max_usd: number | null;
 };
 
-export type Cited<T> = {
-  value: T;
-  source: string;
-  as_of: string;
-};
+export const MUST_HAVE_ATTRS = [
+  "anc",
+  "battery_hours",
+  "weight_g",
+  "bluetooth",
+  "wired_3_5mm",
+  "call_mic",
+  "warranty_years",
+  "foldable",
+] as const;
 
-export type Price = {
-  amount_usd: number;
-  currency: "USD";
-  retailer: string;
+export type MustHaveAttr = (typeof MUST_HAVE_ATTRS)[number];
+
+export type AttrKey = MustHaveAttr | "anc_quality_cite_url" | "anc_quality_note";
+
+export type AttrValue = boolean | number | string;
+
+export type Attr = {
+  value: AttrValue;
   source: string;
   as_of: string;
 };
 
 export type Product = {
-  id: string;
-  brand: string;
+  sku_id: string;
   name: string;
-  form: "over-ear";
-  price: Price;
-  anc?: Cited<boolean>;
-  battery_hours?: Cited<number>;
-  weight_g?: Cited<number>;
-  bluetooth?: Cited<boolean>;
-  wired_3_5mm?: Cited<boolean>;
-  call_mic?: Cited<boolean>;
-  warranty_years?: Cited<number>;
-  foldable?: Cited<boolean>;
-  codecs?: Cited<string>;
-  multipoint?: Cited<string>;
-};
-
-export type ProvenanceField = {
-  value: boolean | number | string | null;
-  source: string | null;
-  as_of: string | null;
+  brand: string;
+  asin: string | null;
+  bestbuy_sku: string | null;
+  price: {
+    street_price_usd: number;
+    source: string;
+    as_of: string;
+  } | null;
+  attrs: Partial<Record<AttrKey, Attr>>;
 };
 
 export type FailedBar = {
@@ -73,49 +81,30 @@ export type FailedBar = {
   message: string;
 };
 
-export type Reject = {
-  id: string;
-  brand: string;
-  name: string;
-  price: Price;
-  failed_bars: FailedBar[];
-};
-
-/** Copyable decision record. Nice-to-haves are not pass/fail fields. */
-export type EnoughRecord = {
-  job: {
-    id: JobId;
-    label: string;
-    soft: SoftPrefs;
-  };
-  thresholds: Thresholds;
-  winner: {
-    id: string;
-    brand: string;
-    name: string;
-  } | null;
-  price: Price | null;
-  rejects: Reject[];
-  provenance: {
-    street_price: ProvenanceField;
-    anc: ProvenanceField;
-    battery_hours: ProvenanceField;
-    weight_g: ProvenanceField;
-    bluetooth: ProvenanceField;
-    wired_3_5mm: ProvenanceField;
-    call_mic: ProvenanceField;
-    warranty_years: ProvenanceField;
-    foldable: ProvenanceField;
-  } | null;
+export type ProvenanceEntry = {
+  attr_key: string;
+  value: AttrValue;
+  source: string;
   as_of: string;
 };
 
-export type EnoughResult = {
+/** Copyable decision. Soft defaults are not pass/fail fields. */
+export type EnoughRecord = {
+  job: { id: string; name: string };
+  thresholds: Thresholds;
+  winner: { id: string; name: string; price: number; as_of: string } | null;
+  cheaper_rejects: Array<{
+    id: string;
+    name: string;
+    price: number;
+    failed_bars: FailedBar[];
+  }>;
+  provenance: ProvenanceEntry[];
+};
+
+export type EnoughOutcome = {
   record: EnoughRecord;
   cleared: number;
-  considered: number;
-  nice: {
-    codecs: ProvenanceField | null;
-    multipoint: ProvenanceField | null;
-  } | null;
+  eligible: number;
+  excluded_ids: string[];
 };

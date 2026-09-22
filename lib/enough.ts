@@ -1,16 +1,13 @@
-import { CATALOG_AS_OF } from "@/data/catalog";
-import type {
-  Cited,
-  EnoughRecord,
-  EnoughResult,
-  FailedBar,
-  Price,
-  Product,
-  ProvenanceField,
-  SoftPrefs,
-  Thresholds,
+import {
+  MUST_HAVE_ATTRS,
+  type Attr,
+  type EnoughOutcome,
+  type FailedBar,
+  type Product,
+  type ProvenanceEntry,
+  type Thresholds,
 } from "@/lib/types";
-import type { JobId } from "@/lib/types";
+import { missingMustHaves } from "@/lib/seed";
 
 type BarKey =
   | "max_price_usd"
@@ -35,16 +32,6 @@ const BAR_ORDER: BarKey[] = [
   "warranty_years",
 ];
 
-export type EnoughInput = {
-  job: {
-    id: JobId;
-    label: string;
-    soft: SoftPrefs;
-  };
-  thresholds: Thresholds;
-  catalog?: Product[];
-};
-
 function cents(amount: number): number {
   return Math.round(amount * 100);
 }
@@ -56,42 +43,18 @@ function money(amount: number): string {
   }).format(amount);
 }
 
-function hours(value: number): string {
-  const text = Number.isInteger(value) ? String(value) : String(value);
-  return `${text} h`;
-}
-
-function cite(field: Cited<boolean | number | string> | undefined): ProvenanceField {
-  if (!field) return { value: null, source: null, as_of: null };
-  return { value: field.value, source: field.source, as_of: field.as_of };
-}
-
-function priceField(price: Price): ProvenanceField {
-  return {
-    value: price.amount_usd,
-    source: price.source,
-    as_of: price.as_of,
-  };
-}
-
 function requireBoolean(
   key: BarKey,
   label: string,
   required: boolean | null,
-  field: Cited<boolean> | undefined,
+  field: Attr | undefined,
 ): FailedBar | null {
   if (required !== true) return null;
-  if (!field) {
-    return {
-      key,
-      message: `${label} is missing, so this pair can't clear a bar that requires it.`,
-    };
+  if (!field || typeof field.value !== "boolean") {
+    return { key, message: `${label} is missing, so this pair can't clear a bar that requires it.` };
   }
   if (field.value !== true) {
-    return {
-      key,
-      message: `${label} is no. The bar requires it.`,
-    };
+    return { key, message: `${label} is no. The bar requires it.` };
   }
   return null;
 }
@@ -100,11 +63,11 @@ function requireMin(
   key: BarKey,
   label: string,
   min: number | null,
-  field: Cited<number> | undefined,
+  field: Attr | undefined,
   format: (value: number) => string,
 ): FailedBar | null {
   if (min === null) return null;
-  if (!field) {
+  if (!field || typeof field.value !== "number") {
     return {
       key,
       message: `${label} is missing, so this pair can't clear a minimum of ${format(min)}.`,
@@ -123,11 +86,11 @@ function requireMax(
   key: BarKey,
   label: string,
   max: number | null,
-  field: Cited<number> | undefined,
+  field: Attr | undefined,
   format: (value: number) => string,
 ): FailedBar | null {
   if (max === null) return null;
-  if (!field) {
+  if (!field || typeof field.value !== "number") {
     return {
       key,
       message: `${label} is missing, so this pair can't clear a maximum of ${format(max)}.`,
@@ -143,126 +106,151 @@ function requireMax(
 }
 
 export function failedBars(product: Product, thresholds: Thresholds): FailedBar[] {
+  const price = product.price?.street_price_usd;
   const checks: Array<FailedBar | null> = [
-    thresholds.max_price_usd === null
-      ? null
-      : cents(product.price.amount_usd) > cents(thresholds.max_price_usd)
+    thresholds.max_price_usd === null || price === undefined
+      ? price === undefined && thresholds.max_price_usd !== null
+        ? { key: "max_price_usd", message: "Street price is missing." }
+        : null
+      : cents(price) > cents(thresholds.max_price_usd)
         ? {
             key: "max_price_usd",
-            message: `Street price is ${money(product.price.amount_usd)}. The bar is at most ${money(thresholds.max_price_usd)}.`,
+            message: `Street price is ${money(price)}. The bar is at most ${money(thresholds.max_price_usd)}.`,
           }
         : null,
-    requireBoolean("anc", "Active noise cancelling", thresholds.anc, product.anc),
-    requireBoolean("bluetooth", "Bluetooth", thresholds.bluetooth, product.bluetooth),
-    requireBoolean("call_mic", "Call mic", thresholds.call_mic, product.call_mic),
+    requireBoolean("anc", "Active noise cancelling", thresholds.anc, product.attrs.anc),
+    requireBoolean("bluetooth", "Bluetooth", thresholds.bluetooth, product.attrs.bluetooth),
+    requireBoolean("call_mic", "Call mic", thresholds.call_mic, product.attrs.call_mic),
     requireBoolean(
       "wired_3_5mm",
       "Wired 3.5 mm",
       thresholds.wired_3_5mm,
-      product.wired_3_5mm,
+      product.attrs.wired_3_5mm,
     ),
-    requireBoolean("foldable", "Foldable", thresholds.foldable, product.foldable),
+    requireBoolean("foldable", "Foldable", thresholds.foldable, product.attrs.foldable),
     requireMin(
       "battery_hours",
       "Battery",
       thresholds.battery_hours_min,
-      product.battery_hours,
-      hours,
+      product.attrs.battery_hours,
+      (value) => `${value} h`,
     ),
     requireMax(
       "weight_g",
       "Weight",
       thresholds.weight_g_max,
-      product.weight_g,
+      product.attrs.weight_g,
       (value) => `${value} g`,
     ),
     requireMin(
       "warranty_years",
       "Warranty",
       thresholds.warranty_years_min,
-      product.warranty_years,
+      product.attrs.warranty_years,
       (value) => (value === 1 ? "1 year" : `${value} years`),
     ),
   ];
-
-  const failed = checks.filter((item): item is FailedBar => item !== null);
-  return failed.sort(
-    (a, b) => BAR_ORDER.indexOf(a.key as BarKey) - BAR_ORDER.indexOf(b.key as BarKey),
-  );
+  return checks
+    .filter((item): item is FailedBar => item !== null)
+    .sort((a, b) => BAR_ORDER.indexOf(a.key as BarKey) - BAR_ORDER.indexOf(b.key as BarKey));
 }
 
-function provenanceFor(product: Product): EnoughRecord["provenance"] {
-  return {
-    street_price: priceField(product.price),
-    anc: cite(product.anc),
-    battery_hours: cite(product.battery_hours),
-    weight_g: cite(product.weight_g),
-    bluetooth: cite(product.bluetooth),
-    wired_3_5mm: cite(product.wired_3_5mm),
-    call_mic: cite(product.call_mic),
-    warranty_years: cite(product.warranty_years),
-    foldable: cite(product.foldable),
-  };
+function provenanceFor(product: Product): ProvenanceEntry[] {
+  const entries: ProvenanceEntry[] = [];
+  if (product.price) {
+    entries.push({
+      attr_key: "street_price_usd",
+      value: product.price.street_price_usd,
+      source: product.price.source,
+      as_of: product.price.as_of,
+    });
+  }
+  for (const key of MUST_HAVE_ATTRS) {
+    const attr = product.attrs[key];
+    if (!attr) continue;
+    entries.push({
+      attr_key: key,
+      value: attr.value,
+      source: attr.source,
+      as_of: attr.as_of,
+    });
+  }
+  for (const key of ["anc_quality_cite_url", "anc_quality_note"] as const) {
+    const attr = product.attrs[key];
+    if (!attr) continue;
+    entries.push({
+      attr_key: key,
+      value: attr.value,
+      source: attr.source,
+      as_of: attr.as_of,
+    });
+  }
+  return entries;
 }
 
 function byPrice(a: Product, b: Product): number {
-  const delta = cents(a.price.amount_usd) - cents(b.price.amount_usd);
+  const left = a.price?.street_price_usd ?? Number.POSITIVE_INFINITY;
+  const right = b.price?.street_price_usd ?? Number.POSITIVE_INFINITY;
+  const delta = cents(left) - cents(right);
   if (delta !== 0) return delta;
-  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  return a.sku_id < b.sku_id ? -1 : a.sku_id > b.sku_id ? 1 : 0;
 }
 
 /**
- * Cheapest SKU that clears every active must-have bar.
- * A missing must-have fails that bar. Nice-to-haves are not read.
+ * Cheapest eligible SKU that clears the applied thresholds.
+ * A SKU missing any must-have attribute is excluded before the bar runs.
+ * Soft defaults are not read.
  */
-export function enough(input: EnoughInput, products: Product[]): EnoughResult {
-  const judged = products.map((product) => ({
+export function enough(
+  job: { id: string; name: string },
+  thresholds: Thresholds,
+  products: Product[],
+): EnoughOutcome {
+  const excluded = products.filter((product) => missingMustHaves(product).length > 0);
+  const eligible = products.filter((product) => missingMustHaves(product).length === 0);
+  const judged = eligible.map((product) => ({
     product,
-    failed: failedBars(product, input.thresholds),
+    failed: failedBars(product, thresholds),
   }));
   const passers = judged
     .filter((item) => item.failed.length === 0)
     .map((item) => item.product)
     .sort(byPrice);
   const winner = passers[0] ?? null;
-  const winnerCents = winner ? cents(winner.price.amount_usd) : null;
+  const winnerCents = winner?.price ? cents(winner.price.street_price_usd) : null;
 
-  const rejects = judged
+  const cheaper_rejects = judged
     .filter((item) => item.failed.length > 0)
     .filter((item) => {
       if (winnerCents === null) return true;
-      return cents(item.product.price.amount_usd) < winnerCents;
+      const price = item.product.price?.street_price_usd;
+      return price !== undefined && cents(price) < winnerCents;
     })
     .sort((a, b) => byPrice(a.product, b.product))
     .map((item) => ({
-      id: item.product.id,
-      brand: item.product.brand,
+      id: item.product.sku_id,
       name: item.product.name,
-      price: item.product.price,
+      price: item.product.price?.street_price_usd ?? 0,
       failed_bars: item.failed,
     }));
 
-  const record: EnoughRecord = {
-    job: input.job,
-    thresholds: input.thresholds,
-    winner: winner
-      ? { id: winner.id, brand: winner.brand, name: winner.name }
-      : null,
-    price: winner ? winner.price : null,
-    rejects,
-    provenance: winner ? provenanceFor(winner) : null,
-    as_of: CATALOG_AS_OF,
-  };
-
   return {
-    record,
+    record: {
+      job,
+      thresholds,
+      winner: winner?.price
+        ? {
+            id: winner.sku_id,
+            name: winner.name,
+            price: winner.price.street_price_usd,
+            as_of: winner.price.as_of,
+          }
+        : null,
+      cheaper_rejects,
+      provenance: winner ? provenanceFor(winner) : [],
+    },
     cleared: passers.length,
-    considered: products.length,
-    nice: winner
-      ? {
-          codecs: winner.codecs ? cite(winner.codecs) : null,
-          multipoint: winner.multipoint ? cite(winner.multipoint) : null,
-        }
-      : null,
+    eligible: eligible.length,
+    excluded_ids: excluded.map((product) => product.sku_id),
   };
 }

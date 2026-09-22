@@ -2,7 +2,7 @@
 
 Enough answers one question: **what is the cheapest over-ear pair that meets this bar?**
 
-It does not rank a top five, republish lab scores, or talk you into a more expensive model. You pick a job, set must-have thresholds, and get one winner, the street price, the cheaper pairs that missed (and which bar they missed), provenance with `as_of`, and a copyable JSON record.
+Pick a job, edit the must-have thresholds, and get one winner, the cheaper pairs that missed, provenance, and a copyable JSON record. There is no account, no public API, and no ranked compare list.
 
 ## Run
 
@@ -12,55 +12,74 @@ npm test
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). `npm run build` produces the production build.
 
-`npm run build` produces the production build. No environment variables and no account are required. The decision runs on the seed in `data/catalog.ts`.
+The page reads `data/seed/` on the server. No environment variables are required until you load Postgres.
+
+## Environment
+
+Copy `.env.example` when the Supabase project **real-value** exists.
+
+| Variable | Where it is used |
+| --- | --- |
+| `SUPABASE_URL` | `npm run load-seed` only |
+| `SUPABASE_SECRET_KEY` | `npm run load-seed` only. Never expose this in the browser. |
+
+Leave both blank until the project ref exists. The UI keeps using the fixture seed.
 
 ## Jobs
 
-Presets live in `data/presets.ts`.
+Presets live in `data/seed/job_presets.json`, not in the React tree. Soft defaults never pass or fail.
 
-| Job | Must-haves | Nice to have (never pass/fail) | Max price |
-| --- | --- | --- | --- |
-| Commute ANC | ANC, Bluetooth, battery ≥ 20 h, weight ≤ 300 g, warranty ≥ 1 year | Foldable | $200 |
-| WFH calls | Call mic, Bluetooth, battery ≥ 20 h, warranty ≥ 1 year | ANC, weight ≤ 320 g | $250 |
-| Travel | ANC, foldable, wired 3.5 mm, Bluetooth, battery ≥ 30 h, warranty ≥ 1 year | Weight ≤ 280 g | $300 |
-| Custom | All bars start empty and editable | None | None |
+| Job | Required | Soft on | Soft off | Max |
+| --- | --- | --- | --- | --- |
+| Commute ANC | ANC, Bluetooth, battery ≥ 20 h, weight ≤ 300 g, warranty ≥ 1 year | Foldable | Call mic, wired 3.5 mm | $200 |
+| WFH calls | Call mic, Bluetooth, battery ≥ 20 h, warranty ≥ 1 year | ANC, weight ≤ 320 g | Foldable, wired 3.5 mm | $250 |
+| Travel | ANC, foldable, wired 3.5 mm, Bluetooth, battery ≥ 30 h, warranty ≥ 1 year | Weight ≤ 280 g | Call mic | $300 |
+| Custom | None | None | None | None |
 
-A missing must-have fails that bar. Codecs and multipoint are stored when the cite has them and are never part of the bar.
+## CSV ingest
 
-## Seed
+Data lands in `data/seed/headphones.csv`. Headers:
 
-Twenty-five over-ear ANC headphones. Battery hours are SoundGuys **Battery Life Anc On** from each product page, captured 2026-09-22. That is a cited duration, not a SoundGuys or RTINGS score. Street price is the Amazon US price printed on the same page, because Best Buy did not respond from this environment. The price row names the retailer (`amazon`) and links the page.
+```text
+sku_id,name,brand,asin,bestbuy_sku,street_price_usd,street_price_source,street_price_as_of,anc,anc_source,anc_as_of,anc_quality_cite_url,anc_quality_note,battery_hours,battery_hours_source,battery_hours_as_of,weight_g,weight_g_source,weight_g_as_of,bluetooth,bluetooth_source,bluetooth_as_of,wired_3_5mm,wired_3_5mm_source,wired_3_5mm_as_of,call_mic,call_mic_source,call_mic_as_of,warranty_years,warranty_years_source,warranty_years_as_of,foldable,foldable_source,foldable_as_of
+```
 
-Warranty years:
+Must-haves are street price, ANC, battery hours, weight, Bluetooth, wired 3.5 mm, call mic, warranty years, and foldable, each with `source` and `as_of`. `anc_quality_cite_url` and `anc_quality_note` are optional and never pass or fail. A blank must-have excludes that SKU from Enough.
 
-- Sony, Bose, Sennheiser, Anker, Apple, and Beats: [SoundGuys warranty guide](https://www.soundguys.com/headphones-warranty-coverage-guide-62736/) (updated 2022-11-04; 18 months for Anker is stored as 1.5 years)
-- JBL: the Harman one-year limited warranty card
-- Skullcandy: the one-year limited warranty policy
+The repo ships five fixture rows so the flow runs before the real catalog arrives. Four are complete. `fixture-gap` is missing warranty and is excluded.
 
-If a brand is not in those cites, warranty is missing and any warranty bar fails the SKU. Wired 3.5 mm is set only when the page names that jack, or names a different wired connection and does not name 3.5 mm. The WH-1000XM6 analog jack is cited to Sony’s spec page because the lab connection field only said Bluetooth.
+Apply the schema, then load the CSV and presets:
 
-Bose QuietComfort Ultra (1st gen) is omitted. On the capture date its SoundGuys product page was mixed with earbud spec fields.
+```bash
+# In the real-value project: supabase/migrations/20260922120000_catalog.sql
+export SUPABASE_URL=...
+export SUPABASE_SECRET_KEY=...
+npm run load-seed
+```
+
+Without those variables the script only validates the CSV. With them it upserts `products`, `product_attributes`, `prices`, and `job_presets`.
 
 ## Decision
 
-`enough()` in `lib/enough.ts` is the only decision function. The page calls it through the `decide` server action. There is no public API.
+`enough(job, thresholds)` in `lib/enough.ts` is the only decision function. The page calls it through the `decide` server action.
 
-The copied JSON has `job`, `thresholds`, `winner`, `price`, `rejects`, `provenance`, and `as_of`.
+The copied JSON has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects` (`id`, failed bars), and `provenance`.
 
-Each decision also writes one JSON log line (`enough_decision`) for learning. That is the whole instrumentation surface.
+The browser logs `session_started`, `thresholds_changed`, and `result_shown`.
 
-## Supabase
+## Tables
 
-`supabase/migrations/20260922120000_catalog.sql` maps the seed onto:
+`supabase/migrations/20260922120000_catalog.sql`
 
-- `products`
-- `product_attributes` (`key`, `value`, `source`, `as_of`)
-- `prices` (`retailer`, `amount_cents`, `source`, `as_of`)
+- `products` — `sku_id`, `name`, `brand`, `asin`, `bestbuy_sku`
+- `product_attributes` — `sku_id`, `attr_key`, `value`, `source`, `as_of`
+- `prices` — `sku_id`, `street_price_usd`, `source`, `as_of`
+- `job_presets` — `id`, `name`, `required`, `soft`, `default_max_usd`
 
-RLS is on. `anon` and `authenticated` can select. They cannot write. The MVP does not connect to a hosted database; apply the migration when a Real Value project exists, then load `data/catalog.ts` into those tables.
+RLS is on. `anon` and `authenticated` can select. They cannot write.
 
 ## Out of scope
 
-Public API or MCP, a browser extension, a ranked compare hub, accounts, scrapers, a multi-retailer price graph, and republished lab scores.
+Public API or MCP, a browser extension, a ranked compare hub, accounts, scrapers, and a multi-retailer price graph.
