@@ -1,0 +1,298 @@
+/* Real Value · Enough — Option A Shelf Tag tokens
+   Locked by Thomas. Restyle only — do not change Enough selection logic. */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* Color */
+  --rv-bg: #ffffff;
+  --rv-paper: #f5f5f5;
+  --rv-ink: #111111;
+  --rv-ink-2: #333333;
+  --rv-muted: #666666;
+  --rv-border: #111111;
+  --rv-accent: #f5c518;
+  --rv-accent-ink: #111111;
+  --rv-track: #e8e8e8;
+
+  /* Type */
+  --rv-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --rv-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Space / radius / stroke */
+  --rv-space-1: 0.25rem;
+  --rv-space-2: 0.5rem;
+  --rv-space-3: 0.75rem;
+  --rv-space-4: 1rem;
+  --rv-space-5: 1.5rem;
+  --rv-space-6: 2rem;
+  --rv-radius: 0;
+  --rv-radius-sm: 2px;
+  --rv-stroke: 2px;
+  --rv-stroke-thin: 1px;
+
+  /* Shadow — hero card only */
+  --rv-shadow-hero: 4px 4px 0 var(--rv-accent);
+}
+
+html, body {
+  background: var(--rv-bg);
+  color: var(--rv-ink);
+  font-family: var(--rv-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utility / component hooks */
+.rv-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
+  align-items: center;
+  background: var(--rv-bg);
+  color: var(--rv-ink);
+  border: var(--rv-stroke) solid var(--rv-border);
+  box-shadow: var(--rv-shadow-hero);
+  border-radius: var(--rv-radius);
+  padding: 16px;
+}
+
+.rv-hero-empty {
+  grid-template-columns: minmax(0, 1fr);
+  box-shadow: none;
+}
+
+.rv-hero-copy {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.rv-badge {
+  display: inline-block;
+  margin: 0;
+  background: var(--rv-bg);
+  color: var(--rv-muted);
+  font-family: var(--rv-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.4rem;
+  border: var(--rv-stroke-thin) solid var(--rv-border);
+}
+
+.rv-name {
+  font-family: var(--rv-sans);
+  font-weight: 700;
+  font-size: clamp(1.25rem, 18cqi, 1.5rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 12px 0 8px;
+}
+
+.rv-price {
+  margin: 0;
+  font-family: var(--rv-mono);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 32cqi, 2.75rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--rv-accent);
+  white-space: nowrap;
+}
+
+.rv-why {
+  margin: 12px 0 0;
+  font-family: var(--rv-sans);
+  font-size: 0.95rem;
+  color: var(--rv-ink-2);
+}
+
+.rv-pool {
+  border-top: var(--rv-stroke) solid var(--rv-border);
+  padding-top: 16px;
+  margin-top: 32px;
+  font-family: var(--rv-sans);
+  font-size: 0.9rem;
+}
+
+.rv-kicker {
+  margin: 0 0 8px;
+  font-family: var(--rv-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+}
+
+.rv-pool p {
+  margin: 0;
+}
+
+.rv-pool-stat {
+  font-family: var(--rv-sans);
+  color: var(--rv-ink);
+}
+
+.rv-pool-miss {
+  margin-top: 4px;
+  color: var(--rv-ink-2);
+}
+
+.rv-pool-why {
+  margin-top: 8px;
+  color: var(--rv-muted);
+  font-size: 0.85rem;
+}
+
+.rv-examples {
+  margin-top: 16px;
+  color: var(--rv-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rv-reject {
+  color: var(--rv-muted);
+  font-size: 0.85rem;
+}
+
+.rv-reject strong {
+  color: var(--rv-ink);
+  font-weight: 600;
+}
+
+.rv-ranges {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: var(--rv-stroke) solid var(--rv-border);
+}
+
+.rv-range-note {
+  margin: 0 0 16px;
+  font-family: var(--rv-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+}
+
+.rv-range {
+  margin-top: 0;
+}
+
+.rv-range + .rv-range {
+  margin-top: 16px;
+}
+
+.rv-range-label {
+  font-family: var(--rv-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+  margin-bottom: 8px;
+}
+
+.rv-track {
+  position: relative;
+  height: 10px;
+  background: var(--rv-track);
+  border: var(--rv-stroke) solid var(--rv-border);
+  overflow: visible;
+}
+
+.rv-track-mark {
+  position: absolute;
+  top: -5px;
+  width: 10px;
+  height: 18px;
+  background: var(--rv-accent);
+  border: var(--rv-stroke) solid var(--rv-border);
+  transform: translateX(-50%);
+}
+
+.rv-winner-label {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--rv-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--rv-ink);
+  background: var(--rv-bg);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.rv-track-mark.is-late .rv-winner-label {
+  left: auto;
+  right: calc(100% + 6px);
+}
+
+.rv-range-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--rv-space-2);
+  font-family: var(--rv-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-ink-2);
+}
+
+.rv-cite {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: var(--rv-stroke) solid var(--rv-border);
+  font-family: var(--rv-sans);
+  font-size: 0.9rem;
+}
+
+.rv-cite a {
+  color: var(--rv-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rv-cite a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.rv-photo,
+.rv-placeholder {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  background: var(--rv-paper);
+  border: var(--rv-stroke) solid var(--rv-border);
+  object-fit: contain;
+  object-position: center;
+}
+
+.rv-placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--rv-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Kill AI-slop defaults if present */
+.rv-no-glow {
+  box-shadow: none;
+  background-image: none;
+  filter: none;
+}

@@ -1,0 +1,459 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { decide } from "@/app/actions";
+import { emptyThresholds, presets, thresholdsFromPreset } from "@/data/presets";
+import { citeSourceLabel } from "@/lib/cite";
+import { whyLine } from "@/lib/why";
+import { track } from "@/lib/track";
+import type { CatalogSpan, EnoughOutcome, EnoughRecord, JobPreset, SoftDefaults, Thresholds } from "@/lib/types";
+
+function money(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
+}
+
+function softNotes(soft: SoftDefaults): { on: string[]; off: string[] } {
+  const on: string[] = [];
+  const off: string[] = [];
+  const flags: Array<[keyof SoftDefaults, string]> = [
+    ["anc", "ANC"],
+    ["bluetooth", "Bluetooth"],
+    ["call_mic", "Call mic"],
+    ["wired_3_5mm", "Wired 3.5 mm"],
+    ["foldable", "Foldable"],
+  ];
+  for (const [key, label] of flags) {
+    if (soft[key] === true) on.push(label);
+    if (soft[key] === false) off.push(label);
+  }
+  if (soft.weight_g_max !== undefined) on.push(`Weight at most ${soft.weight_g_max} g`);
+  return { on, off };
+}
+
+export function Enough() {
+  const [preset, setPreset] = useState<JobPreset | null>(null);
+  const [thresholds, setThresholds] = useState<Thresholds>(emptyThresholds);
+  const [step, setStep] = useState<"job" | "bars" | "result">("job");
+  const [result, setResult] = useState<EnoughOutcome | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    track("session_started");
+  }, []);
+
+  useEffect(() => {
+    if (step === "job" || step === "result") window.scrollTo(0, 0);
+  }, [step]);
+
+  useEffect(() => {
+    if (step === "result" && result) {
+      track("result_shown", {
+        job: result.record.job.id,
+        winner: result.record.winner?.id ?? null,
+      });
+    }
+  }, [step, result]);
+
+  function choose(next: JobPreset) {
+    setPreset(next);
+    setThresholds(thresholdsFromPreset(next));
+    setResult(null);
+    setError(null);
+    setStep("bars");
+  }
+
+  function edit(next: Thresholds) {
+    setThresholds(next);
+    track("thresholds_changed", { job: preset?.id ?? null });
+  }
+
+  function updateNumber(key: keyof Thresholds, raw: string) {
+    edit({
+      ...thresholds,
+      [key]: raw.trim() === "" ? null : Number(raw),
+    });
+  }
+
+  function run() {
+    if (!preset) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        const next = await decide({ jobId: preset.id, thresholds });
+        setResult(next);
+        setStep("result");
+      } catch {
+        setError("Couldn't finish. Try the bar again.");
+      }
+    });
+  }
+
+  const soft = softNotes(preset?.soft ?? {});
+
+  return (
+    <main className="app">
+      <header className="rv-mark rv-no-glow">
+        <div>
+          <p className="eyebrow">Real Value</p>
+          <strong>Enough</strong>
+        </div>
+        <p className="tagline">Cheapest that clears the bar</p>
+      </header>
+
+      {step === "job" && (
+        <section>
+          <h1>Pick a job</h1>
+          <p className="lede">Then set the bar. Cheapest pair that clears it.</p>
+          <div className="jobs">
+            {presets.map((job) => (
+              <button key={job.id} className="rv-job rv-no-glow" type="button" onClick={() => choose(job)}>
+                <span>Job</span>
+                <strong>{job.name}</strong>
+                <em>{job.blurb}</em>
+                <span className="rv-job-cap">
+                  {job.default_max_usd === null ? "No price cap" : `${money(job.default_max_usd)} max`}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {step === "bars" && preset && (
+        <section>
+          <div className="toolbar">
+            <button className="ghost" type="button" onClick={() => setStep("job")}>
+              Jobs
+            </button>
+            <p className="meta">{preset.name}</p>
+          </div>
+          <h1>The bar</h1>
+          <p className="lede">
+            Checked rows must pass. A missing spec is out. A blank number turns that bar off.
+          </p>
+          <div className="bars">
+            <BooleanBar
+              label="Active noise cancelling"
+              checked={thresholds.anc === true}
+              onChange={(on) => edit({ ...thresholds, anc: on ? true : null })}
+            />
+            <BooleanBar
+              label="ANC cited"
+              checked={thresholds.anc_cited === true}
+              onChange={(on) => edit({ ...thresholds, anc_cited: on ? true : null })}
+            />
+            <BooleanBar
+              label="Bluetooth"
+              checked={thresholds.bluetooth === true}
+              onChange={(on) => edit({ ...thresholds, bluetooth: on ? true : null })}
+            />
+            <BooleanBar
+              label="Call mic"
+              checked={thresholds.call_mic === true}
+              onChange={(on) => edit({ ...thresholds, call_mic: on ? true : null })}
+            />
+            <BooleanBar
+              label="Wired 3.5 mm"
+              checked={thresholds.wired_3_5mm === true}
+              onChange={(on) => edit({ ...thresholds, wired_3_5mm: on ? true : null })}
+            />
+            <BooleanBar
+              label="Foldable"
+              checked={thresholds.foldable === true}
+              onChange={(on) => edit({ ...thresholds, foldable: on ? true : null })}
+            />
+            <NumberBar
+              label="Battery at least"
+              suffix="hours"
+              value={thresholds.battery_hours_min}
+              onChange={(raw) => updateNumber("battery_hours_min", raw)}
+            />
+            <NumberBar
+              label="Weight at most"
+              suffix="grams"
+              value={thresholds.weight_g_max}
+              onChange={(raw) => updateNumber("weight_g_max", raw)}
+            />
+            <NumberBar
+              label="Warranty at least"
+              suffix="years"
+              value={thresholds.warranty_years_min}
+              onChange={(raw) => updateNumber("warranty_years_min", raw)}
+            />
+            <NumberBar
+              label="Street price at most"
+              suffix="USD"
+              value={thresholds.max_price_usd}
+              onChange={(raw) => updateNumber("max_price_usd", raw)}
+            />
+          </div>
+          <aside className="soft">
+            <strong>Not a bar</strong>
+            {soft.on.length === 0 && soft.off.length === 0 ? (
+              <p>None on this job. These do not pass or fail.</p>
+            ) : (
+              <>
+                <p>Does not pass or fail.</p>
+                {soft.on.length > 0 && (
+                  <p>On: {soft.on.join(", ")}</p>
+                )}
+                {soft.off.length > 0 && <p>Off: {soft.off.join(", ")}</p>}
+              </>
+            )}
+          </aside>
+          {error && <p className="fail">{error}</p>}
+          <button className="primary" type="button" onClick={run} disabled={pending}>
+            {pending ? "Checking the bar…" : "Find what’s enough"}
+          </button>
+        </section>
+      )}
+
+      {step === "result" && result && preset && (
+        <Result preset={preset} result={result} onEdit={() => setStep("bars")} />
+      )}
+    </main>
+  );
+}
+
+function Result({
+  preset,
+  result,
+  onEdit,
+}: {
+  preset: JobPreset;
+  result: EnoughOutcome;
+  onEdit: () => void;
+}) {
+  const winner = result.record.winner;
+  const cite = citeHref(result);
+  const missed = result.eligible - result.cleared;
+  const examples = result.record.cheaper_rejects.slice(0, 3);
+  const catalogSize = result.eligible + result.excluded_ids.length;
+
+  return (
+    <section className="result">
+      <div className="toolbar">
+        <button className="ghost" type="button" onClick={onEdit}>
+          Edit bar
+        </button>
+        <p className="meta">{preset.name}</p>
+      </div>
+
+      <article className={winner ? "rv-hero" : "rv-hero rv-hero-empty"}>
+        {winner ? <ProductPhoto name={winner.name} url={result.image_url} /> : null}
+        <div className="rv-hero-copy">
+          <p className="rv-badge">{winner ? "Cheapest that clears the bar" : "Nothing cleared the bar"}</p>
+          <h1 className="rv-name">{winner ? winner.name : "No pair was enough"}</h1>
+          {winner && <p className="rv-price">{money(winner.price)}</p>}
+          <p className="rv-why">{whyLine(result)}</p>
+        </div>
+      </article>
+
+      <section className="rv-pool">
+        <h2 className="rv-kicker">Pool</h2>
+        <p className="rv-pool-stat">
+          {result.eligible} considered · {result.cleared} cleared the bar
+        </p>
+        <p className="rv-pool-miss">{missed} didn’t clear</p>
+        {result.fail_reasons.length > 0 && (
+          <p className="rv-pool-why">Didn’t clear: {result.fail_reasons.join(" / ")}</p>
+        )}
+        {examples.length > 0 && (
+          <>
+            <p className="rv-examples">Examples of cheaper misses. Not the full list.</p>
+            <ul className="rv-rejects">
+              {examples.map((reject) => (
+                <li key={reject.id} className="rv-reject">
+                  <header>
+                    <strong>{reject.name}</strong>
+                    <span>{money(reject.price)}</span>
+                  </header>
+                  {reject.failed_bars.map((bar) => (
+                    <p key={bar.key}>{bar.message}</p>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+
+      {(result.ranges.battery_hours || result.ranges.weight_g) && (
+        <div className="rv-ranges">
+          <p className="rv-range-note">Catalog size {catalogSize}</p>
+          {result.ranges.battery_hours && (
+            <SpanBar label="Battery" unit="h" span={result.ranges.battery_hours} />
+          )}
+          {result.ranges.weight_g && (
+            <SpanBar label="Weight" unit="g" span={result.ranges.weight_g} />
+          )}
+        </div>
+      )}
+
+      {cite && winner && (
+        <p className="rv-cite">
+          <a href={cite}>{citeSourceLabel(cite, winner.name)}</a>
+        </p>
+      )}
+
+      <CopyResult record={result.record} />
+    </section>
+  );
+}
+
+function citeHref(result: EnoughOutcome): string | null {
+  const entry = result.record.provenance.find((item) => item.attr_key === "anc_quality_cite_url");
+  if (!entry || typeof entry.value !== "string") return null;
+  const url = entry.value.trim();
+  if (url.startsWith("https://") || url.startsWith("http://")) return url;
+  return null;
+}
+
+function ProductPhoto({ name, url }: { name: string; url: string | null }) {
+  if (url) {
+    return <img className="rv-photo" src={url} alt="" />;
+  }
+  return (
+    <div className="rv-placeholder" role="img" aria-label={`No photo for ${name}`}>
+      No photo
+    </div>
+  );
+}
+
+function SpanBar({
+  label,
+  unit,
+  span,
+}: {
+  label: string;
+  unit: string;
+  span: CatalogSpan;
+}) {
+  const width = span.high - span.low;
+  const pct = width === 0 ? 50 : ((span.winner - span.low) / width) * 100;
+  const caption = `${label} (${unit}). Winner ${formatStat(span.winner)} ${unit}. Catalog low ${formatStat(span.low)} ${unit}, high ${formatStat(span.high)} ${unit}.`;
+  return (
+    <div className="rv-range">
+      <div className="rv-range-label">
+        {label} ({unit})
+      </div>
+      <div className="rv-track" role="img" aria-label={caption}>
+        <span className="rv-tick rv-tick-start" />
+        <span className="rv-tick rv-tick-end" />
+        <span className={pct > 68 ? "rv-track-mark is-late" : "rv-track-mark"} style={{ left: `${pct}%` }}>
+          <span className="rv-winner-label">winner</span>
+        </span>
+      </div>
+      <div className="rv-range-scale">
+        <span>
+          {formatStat(span.low)} {unit}
+        </span>
+        <span>
+          {formatStat(span.winner)} {unit}
+        </span>
+        <span>
+          {formatStat(span.high)} {unit}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CopyResult({ record }: { record: EnoughRecord }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(record, null, 2));
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <button className="copy" type="button" onClick={copy}>
+      {copied ? "Copied" : "Copy structured result"}
+    </button>
+  );
+}
+
+function formatStat(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(value);
+}
+
+function barSummary(thresholds: Thresholds): string {
+  const parts: string[] = [];
+  if (thresholds.anc) parts.push("ANC");
+  if (thresholds.anc_cited) parts.push("ANC cited");
+  if (thresholds.bluetooth) parts.push("Bluetooth");
+  if (thresholds.call_mic) parts.push("call mic");
+  if (thresholds.wired_3_5mm) parts.push("wired 3.5 mm");
+  if (thresholds.foldable) parts.push("foldable");
+  if (thresholds.battery_hours_min !== null) {
+    parts.push(`battery ≥ ${thresholds.battery_hours_min} h`);
+  }
+  if (thresholds.weight_g_max !== null) parts.push(`weight ≤ ${thresholds.weight_g_max} g`);
+  if (thresholds.warranty_years_min !== null) {
+    parts.push(`warranty ≥ ${thresholds.warranty_years_min} y`);
+  }
+  if (thresholds.max_price_usd !== null) parts.push(`at most ${money(thresholds.max_price_usd)}`);
+  if (parts.length === 0) return "No must-have bars. The cheapest eligible pair wins.";
+  return `Must-haves: ${parts.join(", ")}.`;
+}
+
+function BooleanBar({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <fieldset className="bar">
+      <label className="check">
+        <span>{label}</span>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+      </label>
+    </fieldset>
+  );
+}
+
+function NumberBar({
+  label,
+  suffix,
+  value,
+  onChange,
+}: {
+  label: string;
+  suffix: string;
+  value: number | null;
+  onChange: (raw: string) => void;
+}) {
+  return (
+    <label className="bar">
+      <span>
+        {label}
+        <small> {suffix}</small>
+      </span>
+      <input
+        inputMode="decimal"
+        type="number"
+        min={0}
+        step="any"
+        value={value ?? ""}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
