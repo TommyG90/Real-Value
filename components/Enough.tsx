@@ -86,7 +86,7 @@ export function Enough() {
         setResult(next);
         setStep("result");
       } catch {
-        setError("Enough couldn't finish that decision. Try the bar again.");
+        setError("Couldn't finish. Try the bar again.");
       }
     });
   }
@@ -100,21 +100,22 @@ export function Enough() {
           <p className="eyebrow">Real Value</p>
           <strong>Enough</strong>
         </div>
-        <p>Cheapest that meets the bar</p>
+        <p className="tagline">Cheapest that clears the bar</p>
       </header>
 
       {step === "job" && (
         <section>
-          <h1>What are the headphones for?</h1>
-          <p className="lede">
-            Pick a job, set the bar, and get the one cheapest pair that clears it.
-          </p>
+          <h1>Pick a job</h1>
+          <p className="lede">Then set the bar. Cheapest pair that clears it.</p>
           <div className="jobs">
             {presets.map((job) => (
               <button key={job.id} className="job" type="button" onClick={() => choose(job)}>
                 <span>Job</span>
                 <strong>{job.name}</strong>
                 <em>{job.blurb}</em>
+                <b className="cap">
+                  {job.default_max_usd === null ? "No price cap" : `${money(job.default_max_usd)} max`}
+                </b>
               </button>
             ))}
           </div>
@@ -129,10 +130,9 @@ export function Enough() {
             </button>
             <p className="meta">{preset.name}</p>
           </div>
-          <h1>Set the bar</h1>
+          <h1>The bar</h1>
           <p className="lede">
-            Checked rows are must-haves. A SKU missing any must-have attribute is
-            excluded. Empty numbers turn that bar off.
+            Checked rows must pass. A missing spec is out. A blank number turns that bar off.
           </p>
           <div className="bars">
             <BooleanBar
@@ -191,12 +191,12 @@ export function Enough() {
             />
           </div>
           <aside className="soft">
-            <strong>Nice to have</strong>
+            <strong>Not a bar</strong>
             {soft.on.length === 0 && soft.off.length === 0 ? (
-              <p>None for this job. Nice-to-haves never pass or fail.</p>
+              <p>None on this job. These do not pass or fail.</p>
             ) : (
               <>
-                <p>Shown for context. They do not decide the pick.</p>
+                <p>Does not pass or fail.</p>
                 {soft.on.length > 0 && (
                   <p>On: {soft.on.join(", ")}</p>
                 )}
@@ -243,7 +243,7 @@ function Result({
         {winner ? (
           <ProductPhoto name={winner.name} url={result.image_url} />
         ) : null}
-        <p className="kicker">{winner ? "Enough" : "Nothing cleared the bar"}</p>
+        <p className="kicker">{winner ? "Street price" : "Nothing cleared the bar"}</p>
         <h1>{winner ? winner.name : "No pair was enough"}</h1>
         {winner && <p className="price">{money(winner.price)}</p>}
         <p className="why">{whyLine(result)}</p>
