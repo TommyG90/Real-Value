@@ -4,6 +4,7 @@ import test from "node:test";
 import { presetById, thresholdsFromPreset } from "../data/presets";
 import { enough } from "./enough";
 import { whyLine } from "./why";
+import { citeSourceLabel } from "./cite";
 import { catalogImage } from "./images";
 import { CSV_HEADERS, loadSeed, parseCsv, productFromRow, seedPath } from "./seed";
 
@@ -163,4 +164,16 @@ test("ranges are the considered catalog and blank photos stay blank", () => {
   assert.equal(productFromRow({ sku_id: "none", name: "None", brand: "None" }).image_url, null);
   assert.equal(catalogImage({ sku: "javascript:alert(1)" }, "sku"), null);
   assert.equal(catalogImage({ sku: "/catalog/earfun-wave-pro.jpg" }, "sku"), "/catalog/earfun-wave-pro.jpg");
+  const cite = result.record.provenance.find((item) => item.attr_key === "anc_quality_cite_url");
+  assert.equal(cite?.value, "https://www.soundguys.com/earfun-wave-pro-review-112748/");
+  const label = citeSourceLabel(String(cite?.value), result.record.winner?.name ?? "");
+  assert.equal(label, "Source: SoundGuys — EarFun Wave Pro review");
+  assert.equal(label.includes("112748"), false);
+  assert.equal(
+    citeSourceLabel(
+      "https://www.rtings.com/headphones/reviews/anker/soundcore-life-q30-wireless",
+      "soundcore Life Q30",
+    ),
+    "Source: RTINGS — soundcore Life Q30 review",
+  );
 });

@@ -2,7 +2,7 @@
 
 Enough answers one question: **what is the cheapest over-ear pair that meets this bar?**
 
-Pick a job, edit the must-have thresholds, and get the cheapest pair that clears them. The page shows how many pairs were considered, why that one won, and where its battery and weight sit in this catalog. `enough()` still returns the structured record for later agents. There is no account, no public API, and no ranked compare list.
+Pick a job, edit the must-have thresholds, and get the cheapest pair that clears them. The page shows how many pairs were considered, how many didn’t clear, why that one won, and where its battery and weight sit against the catalog size. `enough()` still returns the structured record for later agents. There is no account, no public API, and no ranked compare list.
 
 ## Run
 
@@ -52,7 +52,7 @@ The file is the validated 23-SKU catalog. Every row has the must-have attributes
 
 ## Photos
 
-`image_url` is optional for the decision. A missing or blank cell shows initials and “No photo”. The current catalog fills it for all 23 SKUs. `image_rights` is `prototype_hotlink`: fine to display from the source URL, not cleared to download and re-host. `anc_quality_cite_url`, when present, is a “lab cite” link. It is never shown as a numeric ANC score.
+`image_url` is optional for the decision. A missing or blank cell shows “No photo”. The current catalog fills it for all 23 SKUs. `image_rights` is `prototype_hotlink`: fine to display from the source URL, not cleared to download and re-host. `anc_quality_cite_url`, when present, is a text source link such as “Source: SoundGuys — EarFun Wave Pro review”. It is never shown as a numeric ANC score.
 
 Apply the schema, then load the CSV and presets:
 
@@ -69,7 +69,7 @@ Without those variables the script only validates the CSV. With them it upserts 
 
 `enough(job, thresholds)` in `lib/enough.ts` is the only decision function. The page calls it through the `decide` server action.
 
-The record still has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects`, and `provenance`. The results screen does not print that record or the `as_of` dates. A discreet “Copy structured result” control copies it. Battery and weight ranges are the low and high of the pairs that were considered.
+The record still has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects`, and `provenance`. The results screen does not print that record or the `as_of` dates. A discreet “Copy structured result” control copies it. The hero why line is “Cheapest of the M that cleared every bar.” Battery and weight bands are the low and high of the considered catalog, labeled with the catalog size so that count stays separate from “N considered.” The pool lists up to three cheaper misses as examples.
 
 The browser logs `session_started`, `thresholds_changed`, and `result_shown`.
 

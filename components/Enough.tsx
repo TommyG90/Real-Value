@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { decide } from "@/app/actions";
 import { emptyThresholds, presets, thresholdsFromPreset } from "@/data/presets";
+import { citeSourceLabel } from "@/lib/cite";
 import { whyLine } from "@/lib/why";
 import { track } from "@/lib/track";
 import type { CatalogSpan, EnoughOutcome, EnoughRecord, JobPreset, SoftDefaults, Thresholds } from "@/lib/types";
@@ -229,6 +230,9 @@ function Result({
 }) {
   const winner = result.record.winner;
   const cite = citeHref(result);
+  const missed = result.eligible - result.cleared;
+  const examples = result.record.cheaper_rejects.slice(0, 3);
+  const catalogSize = result.eligible + result.excluded_ids.length;
 
   return (
     <section className="result">
@@ -241,58 +245,58 @@ function Result({
 
       <article className={winner ? "rv-hero" : "rv-hero rv-hero-empty"}>
         {winner ? <ProductPhoto name={winner.name} url={result.image_url} /> : null}
-        <p className="rv-badge">{winner ? "Cheapest that meets bar" : "Nothing cleared the bar"}</p>
-        <h1 className="rv-name">{winner ? winner.name : "No pair was enough"}</h1>
-        {winner && <p className="rv-price">{money(winner.price)}</p>}
-        <p className="rv-why">{whyLine(result)}</p>
+        <div className="rv-hero-copy">
+          <p className="rv-badge">{winner ? "Cheapest that clears the bar" : "Nothing cleared the bar"}</p>
+          <h1 className="rv-name">{winner ? winner.name : "No pair was enough"}</h1>
+          {winner && <p className="rv-price">{money(winner.price)}</p>}
+          <p className="rv-why">{whyLine(result)}</p>
+        </div>
       </article>
 
       <section className="rv-pool">
-        <p>
+        <h2 className="rv-kicker">Pool</h2>
+        <p className="rv-pool-stat">
           {result.eligible} considered · {result.cleared} cleared the bar
         </p>
-        {result.fail_reasons.length > 0 && <p>Didn’t clear: {result.fail_reasons.join(" / ")}</p>}
-        {result.record.cheaper_rejects.length > 0 && (
-          <ul className="rv-rejects">
-            {result.record.cheaper_rejects.map((reject) => (
-              <li key={reject.id} className="rv-reject">
-                <header>
-                  <strong>{reject.name}</strong>
-                  <span>{money(reject.price)}</span>
-                </header>
-                {reject.failed_bars.map((bar) => (
-                  <p key={bar.key}>{bar.message}</p>
-                ))}
-              </li>
-            ))}
-          </ul>
+        <p className="rv-pool-miss">{missed} didn’t clear</p>
+        {result.fail_reasons.length > 0 && (
+          <p className="rv-pool-why">Didn’t clear: {result.fail_reasons.join(" / ")}</p>
+        )}
+        {examples.length > 0 && (
+          <>
+            <p className="rv-examples">Examples of cheaper misses. Not the full list.</p>
+            <ul className="rv-rejects">
+              {examples.map((reject) => (
+                <li key={reject.id} className="rv-reject">
+                  <header>
+                    <strong>{reject.name}</strong>
+                    <span>{money(reject.price)}</span>
+                  </header>
+                  {reject.failed_bars.map((bar) => (
+                    <p key={bar.key}>{bar.message}</p>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
 
       {(result.ranges.battery_hours || result.ranges.weight_g) && (
-        <div>
+        <div className="rv-ranges">
+          <p className="rv-range-note">Catalog size {catalogSize}</p>
           {result.ranges.battery_hours && (
-            <SpanBar
-              label="Battery"
-              unit="h"
-              span={result.ranges.battery_hours}
-              catalogSize={result.eligible}
-            />
+            <SpanBar label="Battery" unit="h" span={result.ranges.battery_hours} />
           )}
           {result.ranges.weight_g && (
-            <SpanBar
-              label="Weight"
-              unit="g"
-              span={result.ranges.weight_g}
-              catalogSize={result.eligible}
-            />
+            <SpanBar label="Weight" unit="g" span={result.ranges.weight_g} />
           )}
         </div>
       )}
 
-      {cite && (
+      {cite && winner && (
         <p className="rv-cite">
-          <a href={cite}>Lab cite</a>
+          <a href={cite}>{citeSourceLabel(cite, winner.name)}</a>
         </p>
       )}
 
@@ -324,32 +328,36 @@ function SpanBar({
   label,
   unit,
   span,
-  catalogSize,
 }: {
   label: string;
   unit: string;
   span: CatalogSpan;
-  catalogSize: number;
 }) {
   const width = span.high - span.low;
   const pct = width === 0 ? 50 : ((span.winner - span.low) / width) * 100;
-  const caption = `${label} ${formatStat(span.winner)} ${unit}. In our catalog of ${catalogSize}, the range is ${formatStat(span.low)} to ${formatStat(span.high)}.`;
+  const caption = `${label} (${unit}). Winner ${formatStat(span.winner)} ${unit}. Catalog low ${formatStat(span.low)} ${unit}, high ${formatStat(span.high)} ${unit}.`;
   return (
     <div className="rv-range">
       <div className="rv-range-label">
-        {label} · in our catalog of {catalogSize}
+        {label} ({unit})
       </div>
       <div className="rv-track" role="img" aria-label={caption}>
         <span className="rv-tick rv-tick-start" />
         <span className="rv-tick rv-tick-end" />
-        <span className="rv-track-mark" style={{ left: `${pct}%` }} />
+        <span className={pct > 68 ? "rv-track-mark is-late" : "rv-track-mark"} style={{ left: `${pct}%` }}>
+          <span className="rv-winner-label">winner</span>
+        </span>
       </div>
       <div className="rv-range-scale">
-        <span>{formatStat(span.low)}</span>
+        <span>
+          {formatStat(span.low)} {unit}
+        </span>
         <span>
           {formatStat(span.winner)} {unit}
         </span>
-        <span>{formatStat(span.high)}</span>
+        <span>
+          {formatStat(span.high)} {unit}
+        </span>
       </div>
     </div>
   );
