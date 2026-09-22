@@ -254,6 +254,24 @@ function Result({
         )}
       </article>
 
+      {result.record.cheaper_rejects.length > 0 && (
+        <ul className="rejects">
+          {result.record.cheaper_rejects.map((reject) => (
+            <li key={reject.id} className="reject">
+              <div>
+                <header>
+                  <strong>{reject.name}</strong>
+                  <span>{money(reject.price)}</span>
+                </header>
+                {reject.failed_bars.map((bar) => (
+                  <p key={bar.key}>{bar.message}</p>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <p className="pool-line">
         {result.eligible} considered · {result.cleared} cleared the bar
       </p>

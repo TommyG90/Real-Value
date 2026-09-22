@@ -145,12 +145,11 @@ test("ranges are the considered catalog and blank photos stay blank", () => {
     23,
   );
   assert.ok(result.fail_reasons.includes("missing cited ANC"));
-  const why = whyLine(result);
-  assert.match(why, /^Cheapest that cleared every required bar/);
-  assert.match(why, /Edifier WH700NB/);
-  assert.match(why, /TOZO HT2/);
-  assert.match(why, /missing cited ANC/);
-  assert.equal(why.replace(/\.$/, "").includes("."), false);
+  assert.equal(whyLine(result), `Cheapest of the ${result.cleared} that cleared every bar.`);
+  for (const id of ["edifier-wh700nb", "tozo-ht2", "1more-sonoflow-pro"]) {
+    const missed = reject(result, id);
+    assert.ok(missed?.failed_bars.some((bar) => bar.key === "anc_cited"));
+  }
   const withPhoto = productFromRow({
     sku_id: "photo",
     name: "Photo",
