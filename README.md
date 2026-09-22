@@ -33,9 +33,9 @@ Presets live in `data/seed/job_presets.json`, not in the React tree. Soft defaul
 
 | Job | Required | Soft on | Soft off | Max |
 | --- | --- | --- | --- | --- |
-| Commute ANC | ANC, Bluetooth, battery ≥ 20 h, weight ≤ 300 g, warranty ≥ 1 year | Foldable | Call mic, wired 3.5 mm | $200 |
+| Commute ANC | ANC, ANC cited, Bluetooth, battery ≥ 20 h, weight ≤ 300 g, warranty ≥ 1 year | Foldable | Call mic, wired 3.5 mm | $200 |
 | WFH calls | Call mic, Bluetooth, battery ≥ 20 h, warranty ≥ 1 year | ANC, weight ≤ 320 g | Foldable, wired 3.5 mm | $250 |
-| Travel | ANC, foldable, wired 3.5 mm, Bluetooth, battery ≥ 30 h, warranty ≥ 1 year | Weight ≤ 280 g | Call mic | $300 |
+| Travel | ANC, ANC cited, foldable, wired 3.5 mm, Bluetooth, battery ≥ 30 h, warranty ≥ 1 year | Weight ≤ 280 g | Call mic | $300 |
 | Custom | None | None | None | None |
 
 ## CSV ingest
@@ -46,7 +46,7 @@ Data lands in `data/seed/headphones.csv`. Headers:
 sku_id,name,brand,asin,bestbuy_sku,street_price_usd,street_price_source,street_price_as_of,anc,anc_source,anc_as_of,anc_quality_cite_url,anc_quality_note,battery_hours,battery_hours_source,battery_hours_as_of,weight_g,weight_g_source,weight_g_as_of,bluetooth,bluetooth_source,bluetooth_as_of,wired_3_5mm,wired_3_5mm_source,wired_3_5mm_as_of,call_mic,call_mic_source,call_mic_as_of,warranty_years,warranty_years_source,warranty_years_as_of,foldable,foldable_source,foldable_as_of
 ```
 
-Must-haves are street price, ANC, battery hours, weight, Bluetooth, wired 3.5 mm, call mic, warranty years, and foldable, each with `source` and `as_of`. `anc_quality_cite_url` and `anc_quality_note` are optional and never pass or fail. A blank must-have excludes that SKU from Enough.
+Must-haves are street price, ANC, battery hours, weight, Bluetooth, wired 3.5 mm, call mic, warranty years, and foldable, each with `source` and `as_of`. `anc_quality_cite_url` and `anc_quality_note` are optional and are not scores. At catalog load, `anc_cited` is true only when that cite URL is non-empty after trim. Commute and Travel require it. An empty cite fails that bar and stays in the catalog. A blank must-have excludes that SKU from Enough.
 
 The file is the validated 23-SKU catalog. Every row has the must-have attributes, so all 23 are eligible.
 

@@ -25,6 +25,7 @@ export async function decide(input: {
 
   const thresholds: Thresholds = {
     anc: boolOrNull(input.thresholds.anc),
+    anc_cited: boolOrNull(input.thresholds.anc_cited),
     bluetooth: boolOrNull(input.thresholds.bluetooth),
     call_mic: boolOrNull(input.thresholds.call_mic),
     wired_3_5mm: boolOrNull(input.thresholds.wired_3_5mm),

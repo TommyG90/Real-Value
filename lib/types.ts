@@ -1,5 +1,6 @@
 export type Thresholds = {
   anc: boolean | null;
+  anc_cited: boolean | null;
   bluetooth: boolean | null;
   call_mic: boolean | null;
   wired_3_5mm: boolean | null;
@@ -12,6 +13,7 @@ export type Thresholds = {
 
 export type RequiredThresholds = {
   anc?: boolean;
+  anc_cited?: boolean;
   bluetooth?: boolean;
   call_mic?: boolean;
   wired_3_5mm?: boolean;
@@ -52,7 +54,11 @@ export const MUST_HAVE_ATTRS = [
 
 export type MustHaveAttr = (typeof MUST_HAVE_ATTRS)[number];
 
-export type AttrKey = MustHaveAttr | "anc_quality_cite_url" | "anc_quality_note";
+export type AttrKey =
+  | MustHaveAttr
+  | "anc_cited"
+  | "anc_quality_cite_url"
+  | "anc_quality_note";
 
 export type AttrValue = boolean | number | string;
 

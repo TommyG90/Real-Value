@@ -15,6 +15,7 @@ import type {
 const ATTR_LABELS: Record<string, string> = {
   street_price_usd: "Street price",
   anc: "Active noise cancelling",
+  anc_cited: "ANC cited",
   battery_hours: "Battery hours",
   weight_g: "Weight (g)",
   bluetooth: "Bluetooth",
@@ -176,6 +177,11 @@ export function Enough() {
               label="Active noise cancelling"
               checked={thresholds.anc === true}
               onChange={(on) => edit({ ...thresholds, anc: on ? true : null })}
+            />
+            <BooleanBar
+              label="ANC cited"
+              checked={thresholds.anc_cited === true}
+              onChange={(on) => edit({ ...thresholds, anc_cited: on ? true : null })}
             />
             <BooleanBar
               label="Bluetooth"
@@ -349,6 +355,7 @@ export function Enough() {
 function barSummary(thresholds: Thresholds): string {
   const parts: string[] = [];
   if (thresholds.anc) parts.push("ANC");
+  if (thresholds.anc_cited) parts.push("ANC cited");
   if (thresholds.bluetooth) parts.push("Bluetooth");
   if (thresholds.call_mic) parts.push("call mic");
   if (thresholds.wired_3_5mm) parts.push("wired 3.5 mm");

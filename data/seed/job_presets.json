@@ -5,6 +5,7 @@
     "blurb": "Noise cancelling on the train. Foldable is nice, not required.",
     "required": {
       "anc": true,
+      "anc_cited": true,
       "bluetooth": true,
       "battery_hours_min": 20,
       "weight_g_max": 300,
@@ -41,6 +42,7 @@
     "blurb": "ANC, folds, and a wired jack for the plane. Lighter is nice.",
     "required": {
       "anc": true,
+      "anc_cited": true,
       "foldable": true,
       "wired_3_5mm": true,
       "bluetooth": true,

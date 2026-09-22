@@ -20,6 +20,7 @@ create table public.product_attributes (
   constraint product_attributes_key_check check (
     attr_key in (
       'anc',
+      'anc_cited',
       'battery_hours',
       'weight_g',
       'bluetooth',

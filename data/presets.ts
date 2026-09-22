@@ -3,6 +3,7 @@ import type { JobPreset, Thresholds } from "@/lib/types";
 
 export const emptyThresholds: Thresholds = {
   anc: null,
+  anc_cited: null,
   bluetooth: null,
   call_mic: null,
   wired_3_5mm: null,
@@ -24,6 +25,7 @@ export function thresholdsFromPreset(preset: JobPreset): Thresholds {
   const required = preset.required;
   return {
     anc: required.anc === true ? true : null,
+    anc_cited: required.anc_cited === true ? true : null,
     bluetooth: required.bluetooth === true ? true : null,
     call_mic: required.call_mic === true ? true : null,
     wired_3_5mm: required.wired_3_5mm === true ? true : null,

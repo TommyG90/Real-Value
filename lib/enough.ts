@@ -12,6 +12,7 @@ import { missingMustHaves } from "@/lib/seed";
 type BarKey =
   | "max_price_usd"
   | "anc"
+  | "anc_cited"
   | "bluetooth"
   | "call_mic"
   | "wired_3_5mm"
@@ -23,6 +24,7 @@ type BarKey =
 const BAR_ORDER: BarKey[] = [
   "max_price_usd",
   "anc",
+  "anc_cited",
   "bluetooth",
   "call_mic",
   "wired_3_5mm",
@@ -119,6 +121,7 @@ export function failedBars(product: Product, thresholds: Thresholds): FailedBar[
           }
         : null,
     requireBoolean("anc", "Active noise cancelling", thresholds.anc, product.attrs.anc),
+    requireBoolean("anc_cited", "ANC cited", thresholds.anc_cited, product.attrs.anc_cited),
     requireBoolean("bluetooth", "Bluetooth", thresholds.bluetooth, product.attrs.bluetooth),
     requireBoolean("call_mic", "Call mic", thresholds.call_mic, product.attrs.call_mic),
     requireBoolean(
@@ -165,7 +168,7 @@ function provenanceFor(product: Product): ProvenanceEntry[] {
       as_of: product.price.as_of,
     });
   }
-  for (const key of MUST_HAVE_ATTRS) {
+  for (const key of [...MUST_HAVE_ATTRS, "anc_cited" as const]) {
     const attr = product.attrs[key];
     if (!attr) continue;
     entries.push({

@@ -161,6 +161,12 @@ export function productFromRow(row: Record<string, string>): Product {
     const attr = cited(row, key);
     if (attr) attrs[key] = attr;
   }
+  const cite = (row.anc_quality_cite_url ?? "").trim();
+  attrs.anc_cited = {
+    value: cite.length > 0,
+    source: cite.length > 0 ? cite : "derived from empty anc_quality_cite_url",
+    as_of: row.anc_as_of || row.street_price_as_of || "",
+  };
   return {
     sku_id: row.sku_id,
     name: row.name,
