@@ -176,4 +176,13 @@ test("ranges are the considered catalog and blank photos stay blank", () => {
     ),
     "Source: RTINGS — soundcore Life Q30 review",
   );
+  assert.equal(
+    citeSourceLabel("https://rtings.com/headphones/1", "Sony WH-1000XM5"),
+    "Source: RTINGS — Sony WH-1000XM5 review",
+  );
+  assert.equal(
+    citeSourceLabel("https://www.soundguys.com/some-other-slug", "EarFun Wave Pro"),
+    "Source: SoundGuys — EarFun Wave Pro review",
+  );
+  assert.equal(CSV_HEADERS.includes("cite_label"), false);
 });

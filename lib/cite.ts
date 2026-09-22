@@ -1,4 +1,4 @@
-/** Visible cite line. Host and page title only — never a numeric score. */
+/** Publisher from the cite URL host only. Never a score, never a CSV label. */
 const PUBLISHERS: Record<string, string> = {
   "soundguys.com": "SoundGuys",
   "rtings.com": "RTINGS",
@@ -13,26 +13,13 @@ export function citeSourceLabel(url: string, productName: string): string {
   }
   const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
   const publisher = PUBLISHERS[host] ?? publisherFromHost(host);
-  const review = /review/i.test(parsed.pathname);
   const name = productName.trim();
-  const page = name || pageFromPath(parsed.pathname);
-  if (!page) return `Source: ${publisher}`;
-  return `Source: ${publisher} — ${page}${review ? " review" : ""}`;
+  if (!name) return `Source: ${publisher}`;
+  return `Source: ${publisher} — ${name} review`;
 }
 
 function publisherFromHost(host: string): string {
   const label = host.split(".")[0] ?? host;
   if (label.length <= 5) return label.toUpperCase();
   return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
-function pageFromPath(pathname: string): string {
-  const segment = pathname.split("/").filter(Boolean).pop() ?? "";
-  const words = decodeURIComponent(segment)
-    .replace(/-\d+$/, "")
-    .replace(/-review$/i, "")
-    .split(/[-_]+/)
-    .filter((word) => word && !/^\d+$/.test(word));
-  if (words.length === 0) return "";
-  return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
