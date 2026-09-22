@@ -52,7 +52,7 @@ The file is the validated 23-SKU catalog. Every row has the must-have attributes
 
 ## Photos
 
-`image_url` is optional for the decision. A missing or blank cell shows “No photo”. The current catalog fills it for all 23 SKUs. `image_rights` is `prototype_hotlink`: fine to display from the source URL, not cleared to download and re-host. `anc_quality_cite_url`, when present, is a text source link such as “Source: SoundGuys — EarFun Wave Pro review”. It is never shown as a numeric ANC score.
+`image_url` is optional for the decision. A missing or blank cell shows “No photo”. The current catalog fills it for all 23 SKUs. `image_rights` is `prototype_hotlink`: fine to display from the source URL, not cleared to download and re-host. `anc_quality_cite_url`, when present, is a text source link. The publisher name comes from the URL host only (`rtings.com` → RTINGS, `soundguys.com` → SoundGuys), formatted “Source: SoundGuys — {product name} review”. There is no `cite_label` column. It is never shown as a numeric ANC score.
 
 Apply the schema, then load the CSV and presets:
 
