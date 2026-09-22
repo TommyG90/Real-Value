@@ -95,7 +95,7 @@ export function Enough() {
 
   return (
     <main className="app">
-      <header className="mark">
+      <header className="rv-mark rv-no-glow">
         <div>
           <p className="eyebrow">Real Value</p>
           <strong>Enough</strong>
@@ -109,13 +109,13 @@ export function Enough() {
           <p className="lede">Then set the bar. Cheapest pair that clears it.</p>
           <div className="jobs">
             {presets.map((job) => (
-              <button key={job.id} className="job" type="button" onClick={() => choose(job)}>
+              <button key={job.id} className="rv-job rv-no-glow" type="button" onClick={() => choose(job)}>
                 <span>Job</span>
                 <strong>{job.name}</strong>
                 <em>{job.blurb}</em>
-                <b className="cap">
+                <span className="rv-job-cap">
                   {job.default_max_usd === null ? "No price cap" : `${money(job.default_max_usd)} max`}
-                </b>
+                </span>
               </button>
             ))}
           </div>
@@ -239,26 +239,23 @@ function Result({
         <p className="meta">{preset.name}</p>
       </div>
 
-      <article className={winner ? "hero" : "hero empty"}>
-        {winner ? (
-          <ProductPhoto name={winner.name} url={result.image_url} />
-        ) : null}
-        <p className="kicker">{winner ? "Street price" : "Nothing cleared the bar"}</p>
-        <h1>{winner ? winner.name : "No pair was enough"}</h1>
-        {winner && <p className="price">{money(winner.price)}</p>}
-        <p className="why">{whyLine(result)}</p>
-        {cite && (
-          <a className="cite" href={cite}>
-            lab cite
-          </a>
-        )}
+      <article className={winner ? "rv-hero" : "rv-hero rv-hero-empty"}>
+        {winner ? <ProductPhoto name={winner.name} url={result.image_url} /> : null}
+        <p className="rv-badge">{winner ? "Cheapest that meets bar" : "Nothing cleared the bar"}</p>
+        <h1 className="rv-name">{winner ? winner.name : "No pair was enough"}</h1>
+        {winner && <p className="rv-price">{money(winner.price)}</p>}
+        <p className="rv-why">{whyLine(result)}</p>
       </article>
 
-      {result.record.cheaper_rejects.length > 0 && (
-        <ul className="rejects">
-          {result.record.cheaper_rejects.map((reject) => (
-            <li key={reject.id} className="reject">
-              <div>
+      <section className="rv-pool">
+        <p>
+          {result.eligible} considered · {result.cleared} cleared the bar
+        </p>
+        {result.fail_reasons.length > 0 && <p>Didn’t clear: {result.fail_reasons.join(" / ")}</p>}
+        {result.record.cheaper_rejects.length > 0 && (
+          <ul className="rv-rejects">
+            {result.record.cheaper_rejects.map((reject) => (
+              <li key={reject.id} className="rv-reject">
                 <header>
                   <strong>{reject.name}</strong>
                   <span>{money(reject.price)}</span>
@@ -266,21 +263,14 @@ function Result({
                 {reject.failed_bars.map((bar) => (
                   <p key={bar.key}>{bar.message}</p>
                 ))}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <p className="pool-line">
-        {result.eligible} considered · {result.cleared} cleared the bar
-      </p>
-      {result.fail_reasons.length > 0 && (
-        <p className="hint">Didn’t clear: {result.fail_reasons.join(" / ")}</p>
-      )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {(result.ranges.battery_hours || result.ranges.weight_g) && (
-        <section className="spans">
+        <div>
           {result.ranges.battery_hours && (
             <SpanBar
               label="Battery"
@@ -297,7 +287,13 @@ function Result({
               catalogSize={result.eligible}
             />
           )}
-        </section>
+        </div>
+      )}
+
+      {cite && (
+        <p className="rv-cite">
+          <a href={cite}>Lab cite</a>
+        </p>
       )}
 
       <CopyResult record={result.record} />
@@ -315,23 +311,13 @@ function citeHref(result: EnoughOutcome): string | null {
 
 function ProductPhoto({ name, url }: { name: string; url: string | null }) {
   if (url) {
-    return <img className="photo photo-hero" src={url} alt="" />;
+    return <img className="rv-photo" src={url} alt="" />;
   }
   return (
-    <div className="photo photo-hero placeholder" role="img" aria-label={`No photo for ${name}`}>
-      <strong>{initials(name)}</strong>
-      <span>No photo</span>
+    <div className="rv-placeholder" role="img" aria-label={`No photo for ${name}`}>
+      No photo
     </div>
   );
-}
-
-function initials(name: string): string {
-  const words = name
-    .replace(/[^A-Za-z0-9 ]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-  const letters = words.map((word) => word[0]).slice(0, 2);
-  return letters.join("").toUpperCase() || "—";
 }
 
 function SpanBar({
@@ -349,22 +335,20 @@ function SpanBar({
   const pct = width === 0 ? 50 : ((span.winner - span.low) / width) * 100;
   const caption = `${label} ${formatStat(span.winner)} ${unit}. In our catalog of ${catalogSize}, the range is ${formatStat(span.low)} to ${formatStat(span.high)}.`;
   return (
-    <div className="span">
-      <div className="span-top">
-        <span>{label}</span>
-        <span>in our catalog of {catalogSize}</span>
+    <div className="rv-range">
+      <div className="rv-range-label">
+        {label} · in our catalog of {catalogSize}
       </div>
-      <div className="track" role="img" aria-label={caption}>
-        <span className="tick tick-start" />
-        <span className="tick tick-end" />
-        <span className="marker" style={{ left: `${pct}%` }}>
-          <span className="mark-value">
-            {formatStat(span.winner)} {unit}
-          </span>
-        </span>
+      <div className="rv-track" role="img" aria-label={caption}>
+        <span className="rv-tick rv-tick-start" />
+        <span className="rv-tick rv-tick-end" />
+        <span className="rv-track-mark" style={{ left: `${pct}%` }} />
       </div>
-      <div className="span-ends">
+      <div className="rv-range-scale">
         <span>{formatStat(span.low)}</span>
+        <span>
+          {formatStat(span.winner)} {unit}
+        </span>
         <span>{formatStat(span.high)}</span>
       </div>
     </div>

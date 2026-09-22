@@ -1,0 +1,188 @@
+/* Real Value · Enough — Option A Shelf Tag tokens
+   Locked by Thomas. Restyle only — do not change Enough selection logic. */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* Color */
+  --rv-bg: #ffffff;
+  --rv-paper: #f5f5f5;
+  --rv-ink: #111111;
+  --rv-ink-2: #333333;
+  --rv-muted: #666666;
+  --rv-border: #111111;
+  --rv-accent: #f5c518;
+  --rv-accent-ink: #111111;
+  --rv-track: #e8e8e8;
+
+  /* Type */
+  --rv-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --rv-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Space / radius / stroke */
+  --rv-space-1: 0.25rem;
+  --rv-space-2: 0.5rem;
+  --rv-space-3: 0.75rem;
+  --rv-space-4: 1rem;
+  --rv-space-5: 1.5rem;
+  --rv-space-6: 2rem;
+  --rv-radius: 0;
+  --rv-radius-sm: 2px;
+  --rv-stroke: 2px;
+  --rv-stroke-thin: 1px;
+
+  /* Shadow — hero card only */
+  --rv-shadow-hero: 4px 4px 0 var(--rv-accent);
+}
+
+html, body {
+  background: var(--rv-bg);
+  color: var(--rv-ink);
+  font-family: var(--rv-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utility / component hooks */
+.rv-hero {
+  background: var(--rv-bg);
+  color: var(--rv-ink);
+  border: var(--rv-stroke) solid var(--rv-border);
+  box-shadow: var(--rv-shadow-hero);
+  border-radius: var(--rv-radius);
+  padding: var(--rv-space-5);
+}
+
+.rv-badge {
+  display: inline-block;
+  background: var(--rv-bg);
+  color: var(--rv-ink);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.45rem;
+  border: var(--rv-stroke-thin) solid var(--rv-border);
+}
+
+.rv-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  margin: var(--rv-space-3) 0 var(--rv-space-2);
+}
+
+.rv-price {
+  font-family: var(--rv-mono);
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--rv-accent);
+}
+
+.rv-why {
+  margin-top: var(--rv-space-3);
+  font-size: 0.95rem;
+  color: var(--rv-ink-2);
+}
+
+.rv-pool {
+  border-top: var(--rv-stroke-thin) solid var(--rv-border);
+  padding-top: var(--rv-space-4);
+  margin-top: var(--rv-space-5);
+  font-size: 0.9rem;
+}
+
+.rv-reject {
+  color: var(--rv-muted);
+  font-size: 0.85rem;
+}
+
+.rv-reject strong {
+  color: var(--rv-ink);
+  font-weight: 600;
+}
+
+.rv-range {
+  margin-top: var(--rv-space-4);
+}
+
+.rv-range-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+  margin-bottom: var(--rv-space-2);
+}
+
+.rv-track {
+  position: relative;
+  height: 8px;
+  background: var(--rv-track);
+  border: var(--rv-stroke-thin) solid var(--rv-border);
+}
+
+.rv-track-mark {
+  position: absolute;
+  top: -4px;
+  width: 10px;
+  height: 16px;
+  background: var(--rv-accent);
+  border: var(--rv-stroke-thin) solid var(--rv-border);
+  transform: translateX(-50%);
+}
+
+.rv-range-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--rv-space-2);
+  font-family: var(--rv-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-ink-2);
+}
+
+.rv-cite {
+  margin-top: var(--rv-space-4);
+  font-size: 0.9rem;
+}
+
+.rv-cite a {
+  color: var(--rv-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rv-cite a:hover {
+  background: var(--rv-accent);
+}
+
+.rv-photo,
+.rv-placeholder {
+  aspect-ratio: 1 / 1;
+  background: var(--rv-paper);
+  border: var(--rv-stroke-thin) solid var(--rv-border);
+  object-fit: contain;
+  width: min(100%, 16rem);
+}
+
+.rv-placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--rv-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Kill AI-slop defaults if present */
+.rv-no-glow {
+  box-shadow: none;
+  background-image: none;
+  filter: none;
+}
