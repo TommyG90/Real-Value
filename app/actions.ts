@@ -1,8 +1,9 @@
 "use server";
 
 import { presetById } from "@/data/presets";
+import headphonesCsv from "@/data/seed/headphones.csv";
 import { enough } from "@/lib/enough";
-import { loadSeed } from "@/lib/seed";
+import { catalogFromCsv } from "@/lib/seed";
 import type { EnoughOutcome, Thresholds } from "@/lib/types";
 
 function finiteOrNull(value: unknown): number | null {
@@ -36,7 +37,7 @@ export async function decide(input: {
     max_price_usd: finiteOrNull(input.thresholds.max_price_usd),
   };
 
-  const seed = loadSeed();
+  const seed = catalogFromCsv(headphonesCsv);
   return enough({ id: preset.id, name: preset.name }, thresholds, [
     ...seed.eligible,
     ...seed.excluded,

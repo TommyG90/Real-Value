@@ -194,11 +194,14 @@ export function missingMustHaves(product: Product): string[] {
   return missing;
 }
 
-export function loadSeed(): { eligible: Product[]; excluded: Product[] } {
-  const text = readFileSync(seedPath("headphones.csv"), "utf8");
+export function catalogFromCsv(text: string): { eligible: Product[]; excluded: Product[] } {
   const products = parseCsv(text).map(productFromRow).filter((product) => product.sku_id);
   return {
     eligible: products.filter((product) => missingMustHaves(product).length === 0),
     excluded: products.filter((product) => missingMustHaves(product).length > 0),
   };
+}
+
+export function loadSeed(): { eligible: Product[]; excluded: Product[] } {
+  return catalogFromCsv(readFileSync(seedPath("headphones.csv"), "utf8"));
 }
