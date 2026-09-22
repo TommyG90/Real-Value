@@ -181,7 +181,7 @@ export function failedBars(product: Product, thresholds: Thresholds): FailedBar[
       "Warranty",
       thresholds.warranty_years_min,
       product.warranty_years,
-      (value) => `${value} years`,
+      (value) => (value === 1 ? "1 year" : `${value} years`),
     ),
   ];
 

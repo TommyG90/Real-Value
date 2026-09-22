@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { decide } from "@/app/actions";
 import { emptyThresholds, presets } from "@/data/presets";
 import type {
@@ -55,6 +55,12 @@ export function Enough() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (step === "job" || step === "result") {
+      window.scrollTo(0, 0);
+    }
+  }, [step]);
 
   function choose(next: JobPreset) {
     setPreset(next);
