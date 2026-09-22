@@ -340,7 +340,7 @@ export function Enough() {
         </section>
       )}
       <p className="meta">
-        Fixture seed in data/seed/headphones.csv. A SKU missing a must-have is excluded.
+        Catalog in data/seed/headphones.csv. A SKU missing a must-have is excluded.
       </p>
     </main>
   );

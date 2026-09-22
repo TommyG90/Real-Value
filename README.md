@@ -25,7 +25,7 @@ Copy `.env.example` when the Supabase project **real-value** exists.
 | `SUPABASE_URL` | `npm run load-seed` only |
 | `SUPABASE_SECRET_KEY` | `npm run load-seed` only. Never expose this in the browser. |
 
-Leave both blank until the project ref exists. The UI keeps using the fixture seed.
+Leave both blank until the project ref exists. The UI reads `data/seed/headphones.csv` offline.
 
 ## Jobs
 
@@ -48,7 +48,7 @@ sku_id,name,brand,asin,bestbuy_sku,street_price_usd,street_price_source,street_p
 
 Must-haves are street price, ANC, battery hours, weight, Bluetooth, wired 3.5 mm, call mic, warranty years, and foldable, each with `source` and `as_of`. `anc_quality_cite_url` and `anc_quality_note` are optional and never pass or fail. A blank must-have excludes that SKU from Enough.
 
-The repo ships five fixture rows so the flow runs before the real catalog arrives. Four are complete. `fixture-gap` is missing warranty and is excluded.
+The file is the validated 23-SKU catalog. Every row has the must-have attributes, so all 23 are eligible.
 
 Apply the schema, then load the CSV and presets:
 
