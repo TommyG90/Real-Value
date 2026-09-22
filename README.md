@@ -2,7 +2,7 @@
 
 Enough answers one question: **what is the cheapest over-ear pair that meets this bar?**
 
-Pick a job, edit the must-have thresholds, and get one winner, the cheaper pairs that missed, provenance, and a copyable JSON record. There is no account, no public API, and no ranked compare list.
+Pick a job, edit the must-have thresholds, and get the cheapest pair that clears them. The page shows how many pairs were considered, why that one won, and where its battery and weight sit in this catalog. `enough()` still returns the structured record for later agents. There is no account, no public API, and no ranked compare list.
 
 ## Run
 
@@ -50,6 +50,10 @@ Must-haves are street price, ANC, battery hours, weight, Bluetooth, wired 3.5 mm
 
 The file is the validated 23-SKU catalog. Every row has the must-have attributes, so all 23 are eligible.
 
+## Photos
+
+`data/seed/product_images.json` maps each `sku_id` to an image URL. The CSV headers stay as Engineering locked them. A blank value means Data has not supplied a photo, and the results page shows a placeholder. Fill a value with an `https://` URL, or a file under `public/` such as `/catalog/earfun-wave-pro.jpg`, only when that file is a real product photo. Do not add stock or invented images.
+
 Apply the schema, then load the CSV and presets:
 
 ```bash
@@ -65,7 +69,7 @@ Without those variables the script only validates the CSV. With them it upserts 
 
 `enough(job, thresholds)` in `lib/enough.ts` is the only decision function. The page calls it through the `decide` server action.
 
-The copied JSON has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects` (`id`, failed bars), and `provenance`.
+The record still has `job`, `thresholds`, `winner` (`id`, `name`, `price`, `as_of`), `cheaper_rejects`, and `provenance`. The results screen does not print that record, the source URLs, or the `as_of` dates. Battery and weight ranges are the low and high of the pairs that were considered.
 
 The browser logs `session_started`, `thresholds_changed`, and `result_shown`.
 

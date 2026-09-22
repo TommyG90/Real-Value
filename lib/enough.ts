@@ -237,6 +237,15 @@ export function enough(
       failed_bars: item.failed,
     }));
 
+  const winnerPrice = winner?.price?.street_price_usd;
+  const same_price_count =
+    winnerPrice === undefined
+      ? 0
+      : passers.filter(
+          (product) =>
+            product.price !== null && cents(product.price.street_price_usd) === cents(winnerPrice),
+        ).length;
+
   return {
     record: {
       job,
@@ -255,5 +264,26 @@ export function enough(
     cleared: passers.length,
     eligible: eligible.length,
     excluded_ids: excluded.map((product) => product.sku_id),
+    ranges: {
+      battery_hours: span(eligible, "battery_hours", winner),
+      weight_g: span(eligible, "weight_g", winner),
+    },
+    same_price_count,
   };
+}
+
+function span(
+  products: Product[],
+  key: "battery_hours" | "weight_g",
+  winner: Product | null,
+): { low: number; high: number; winner: number } | null {
+  if (!winner) return null;
+  const winnerValue = winner.attrs[key]?.value;
+  if (typeof winnerValue !== "number") return null;
+  const values = products.flatMap((product) => {
+    const value = product.attrs[key]?.value;
+    return typeof value === "number" ? [value] : [];
+  });
+  if (values.length === 0) return null;
+  return { low: Math.min(...values), high: Math.max(...values), winner: winnerValue };
 }

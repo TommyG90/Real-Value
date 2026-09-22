@@ -108,9 +108,24 @@ export type EnoughRecord = {
   provenance: ProvenanceEntry[];
 };
 
+/** Low and high are the considered catalog. `winner` is the pick's own value. */
+export type CatalogSpan = {
+  low: number;
+  high: number;
+  winner: number;
+};
+
 export type EnoughOutcome = {
   record: EnoughRecord;
   cleared: number;
   eligible: number;
   excluded_ids: string[];
+  ranges: {
+    battery_hours: CatalogSpan | null;
+    weight_g: CatalogSpan | null;
+  };
+  /** Passers at the winner's price, including the winner. 0 when nothing clears. */
+  same_price_count: number;
+  /** Display-only. Blank catalog photos are null. Not a pass/fail field. */
+  images?: Record<string, string | null>;
 };

@@ -2,7 +2,9 @@
 
 import { presetById } from "@/data/presets";
 import headphonesCsv from "@/data/seed/headphones.csv";
+import productImages from "@/data/seed/product_images.json";
 import { enough } from "@/lib/enough";
+import { catalogImage } from "@/lib/images";
 import { catalogFromCsv } from "@/lib/seed";
 import type { EnoughOutcome, Thresholds } from "@/lib/types";
 
@@ -38,8 +40,15 @@ export async function decide(input: {
   };
 
   const seed = catalogFromCsv(headphonesCsv);
-  return enough({ id: preset.id, name: preset.name }, thresholds, [
+  const outcome = enough({ id: preset.id, name: preset.name }, thresholds, [
     ...seed.eligible,
     ...seed.excluded,
   ]);
+  const ids = [
+    outcome.record.winner?.id,
+    ...outcome.record.cheaper_rejects.map((item) => item.id),
+  ].filter((id): id is string => Boolean(id));
+  const images: Record<string, string | null> = {};
+  for (const id of ids) images[id] = catalogImage(productImages as Record<string, string>, id);
+  return { ...outcome, images };
 }

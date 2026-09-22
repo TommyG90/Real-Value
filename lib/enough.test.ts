@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import productImages from "../data/seed/product_images.json";
 import { presetById, thresholdsFromPreset } from "../data/presets";
 import { enough } from "./enough";
+import { catalogImage } from "./images";
 import { CSV_HEADERS, loadSeed, parseCsv, productFromRow, seedPath } from "./seed";
 
 const seed = loadSeed();
@@ -114,4 +116,27 @@ test("custom with empty bars returns the cheapest eligible SKU", () => {
   assert.equal(result.record.thresholds.anc, null);
   assert.equal(result.record.thresholds.anc_cited, null);
   assert.equal(result.record.thresholds.max_price_usd, null);
+});
+
+test("ranges are the considered catalog and blank photos stay blank", () => {
+  const result = run("commute");
+  const winner = products.find((item) => item.sku_id === result.record.winner?.id);
+  assert.ok(winner);
+  for (const key of ["battery_hours", "weight_g"] as const) {
+    const values = products.flatMap((item) => {
+      const value = item.attrs[key]?.value;
+      return typeof value === "number" ? [value] : [];
+    });
+    const span = result.ranges[key];
+    assert.ok(span);
+    assert.equal(span.low, Math.min(...values));
+    assert.equal(span.high, Math.max(...values));
+    assert.equal(span.winner, winner.attrs[key]?.value);
+  }
+  assert.equal(result.same_price_count, 2);
+  assert.equal(catalogImage(productImages as Record<string, string>, "earfun-wave-pro"), null);
+  assert.equal(catalogImage({ sku: "  " }, "sku"), null);
+  assert.equal(catalogImage({ sku: "javascript:alert(1)" }, "sku"), null);
+  assert.equal(catalogImage({ sku: "https://cdn.example/earfun.jpg" }, "sku"), "https://cdn.example/earfun.jpg");
+  assert.equal(catalogImage({ sku: "/catalog/earfun-wave-pro.jpg" }, "sku"), "/catalog/earfun-wave-pro.jpg");
 });

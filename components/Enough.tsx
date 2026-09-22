@@ -4,39 +4,13 @@ import { useEffect, useState, useTransition } from "react";
 import { decide } from "@/app/actions";
 import { emptyThresholds, presets, thresholdsFromPreset } from "@/data/presets";
 import { track } from "@/lib/track";
-import type {
-  EnoughOutcome,
-  JobPreset,
-  ProvenanceEntry,
-  SoftDefaults,
-  Thresholds,
-} from "@/lib/types";
-
-const ATTR_LABELS: Record<string, string> = {
-  street_price_usd: "Street price",
-  anc: "Active noise cancelling",
-  anc_cited: "ANC cited",
-  battery_hours: "Battery hours",
-  weight_g: "Weight (g)",
-  bluetooth: "Bluetooth",
-  wired_3_5mm: "Wired 3.5 mm",
-  call_mic: "Call mic",
-  warranty_years: "Warranty years",
-  foldable: "Foldable",
-  anc_quality_cite_url: "ANC cite",
-  anc_quality_note: "ANC note",
-};
+import type { CatalogSpan, EnoughOutcome, JobPreset, SoftDefaults, Thresholds } from "@/lib/types";
 
 function money(amount: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(amount);
-}
-
-function formatValue(value: ProvenanceEntry["value"]): string {
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  return String(value);
 }
 
 function softNotes(soft: SoftDefaults): { on: string[]; off: string[] } {
@@ -62,7 +36,6 @@ export function Enough() {
   const [thresholds, setThresholds] = useState<Thresholds>(emptyThresholds);
   const [step, setStep] = useState<"job" | "bars" | "result">("job");
   const [result, setResult] = useState<EnoughOutcome | null>(null);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -87,7 +60,6 @@ export function Enough() {
     setPreset(next);
     setThresholds(thresholdsFromPreset(next));
     setResult(null);
-    setCopied(false);
     setError(null);
     setStep("bars");
   }
@@ -107,7 +79,6 @@ export function Enough() {
   function run() {
     if (!preset) return;
     setError(null);
-    setCopied(false);
     startTransition(async () => {
       try {
         const next = await decide({ jobId: preset.id, thresholds });
@@ -117,16 +88,6 @@ export function Enough() {
         setError("Enough couldn't finish that decision. Try the bar again.");
       }
     });
-  }
-
-  async function copyRecord() {
-    if (!result) return;
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(result.record, null, 2));
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
   }
 
   const soft = softNotes(preset?.soft ?? {});
@@ -250,106 +211,220 @@ export function Enough() {
       )}
 
       {step === "result" && result && preset && (
-        <section>
-          <div className="toolbar">
-            <button className="ghost" type="button" onClick={() => setStep("bars")}>
-              Edit bar
-            </button>
-            <p className="meta">
-              {result.cleared} of {result.eligible} eligible clear
-            </p>
-          </div>
-          <h1>{preset.name}</h1>
-          <p className="lede">{barSummary(thresholds)}</p>
-          {result.excluded_ids.length > 0 && (
-            <p className="hint">
-              Excluded for a missing must-have: {result.excluded_ids.join(", ")}.
-            </p>
-          )}
-          {result.record.winner ? (
-            <article className="card winner">
-              <p className="kicker">The cheapest that clears your bar</p>
-              <h2>{result.record.winner.name}</h2>
-              <p className="price">{money(result.record.winner.price)}</p>
-              <p className="hint">Street price as of {result.record.winner.as_of}</p>
-            </article>
-          ) : (
-            <article className="card empty">
-              <p className="kicker">Nothing cleared the bar</p>
-              <p>Loosen a must-have, or leave a number blank to turn that bar off.</p>
-            </article>
-          )}
-
-          <h2>{result.record.winner ? "Why not cheaper" : "What missed"}</h2>
-          {result.record.cheaper_rejects.length === 0 ? (
-            <p className="lede">No cheaper pair missed this bar.</p>
-          ) : (
-            <ul className="rejects">
-              {result.record.cheaper_rejects.map((reject) => (
-                <li key={reject.id} className="reject">
-                  <header>
-                    <strong>{reject.name}</strong>
-                    <span>{money(reject.price)}</span>
-                  </header>
-                  {reject.failed_bars.map((bar) => (
-                    <p key={bar.key} className="fail">
-                      {bar.message}
-                    </p>
-                  ))}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {result.record.provenance.length > 0 && (
-            <>
-              <h2>Provenance</h2>
-              <ul className="provenance">
-                {result.record.provenance.map((entry) => (
-                  <li key={entry.attr_key}>
-                    <strong>{ATTR_LABELS[entry.attr_key] ?? entry.attr_key}</strong>
-                    <p>
-                      {formatValue(entry.value)} · as of {entry.as_of}
-                    </p>
-                    <small>
-                      {entry.source.startsWith("http") ? (
-                        <a href={entry.source}>{entry.source}</a>
-                      ) : (
-                        entry.source
-                      )}
-                    </small>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          {(soft.on.length > 0 || soft.off.length > 0) && (
-            <aside className="soft">
-              <strong>Nice to have</strong>
-              <p>Not used to pass or fail.</p>
-              {soft.on.length > 0 && <p>On: {soft.on.join(", ")}</p>}
-              {soft.off.length > 0 && <p>Off: {soft.off.join(", ")}</p>}
-            </aside>
-          )}
-
-          <div className="json">
-            <div className="toolbar">
-              <h2>Decision record</h2>
-              <button className="ghost" type="button" onClick={copyRecord}>
-                Copy JSON
-              </button>
-            </div>
-            {copied && <p className="copied">Copied.</p>}
-            <pre>{JSON.stringify(result.record, null, 2)}</pre>
-          </div>
-        </section>
+        <Result
+          preset={preset}
+          result={result}
+          thresholds={thresholds}
+          soft={soft}
+          onEdit={() => setStep("bars")}
+        />
       )}
-      <p className="meta">
-        Catalog in data/seed/headphones.csv. A SKU missing a must-have is excluded.
-      </p>
     </main>
   );
+}
+
+function Result({
+  preset,
+  result,
+  thresholds,
+  soft,
+  onEdit,
+}: {
+  preset: JobPreset;
+  result: EnoughOutcome;
+  thresholds: Thresholds;
+  soft: { on: string[]; off: string[] };
+  onEdit: () => void;
+}) {
+  const winner = result.record.winner;
+  const missed = result.eligible - result.cleared;
+  const cheaper = result.record.cheaper_rejects;
+
+  return (
+    <section className="result">
+      <div className="toolbar">
+        <button className="ghost" type="button" onClick={onEdit}>
+          Edit bar
+        </button>
+        <p className="meta">{preset.name}</p>
+      </div>
+
+      {winner ? (
+        <article className="hero">
+          <ProductPhoto name={winner.name} url={result.images?.[winner.id] ?? null} size="hero" />
+          <p className="kicker">Enough for {preset.name}</p>
+          <h1>{winner.name}</h1>
+          <p className="price">{money(winner.price)}</p>
+          <p className="why">{decisionWhy(result)}</p>
+        </article>
+      ) : (
+        <article className="hero empty">
+          <p className="kicker">Nothing cleared the bar</p>
+          <h1>No pair was enough</h1>
+          <p className="why">No pair met every must-have. Loosen a bar, or leave a number blank to turn it off.</p>
+        </article>
+      )}
+
+      <dl className="pool">
+        <div>
+          <dt>Considered</dt>
+          <dd>{result.eligible}</dd>
+        </div>
+        <div>
+          <dt>Cleared</dt>
+          <dd>{result.cleared}</dd>
+        </div>
+        <div>
+          <dt>Missed</dt>
+          <dd>{missed}</dd>
+        </div>
+      </dl>
+      <p className="hint pool-note">{barSummary(thresholds)}</p>
+      {result.excluded_ids.length > 0 && (
+        <p className="hint">
+          {result.excluded_ids.length === 1
+            ? "1 pair was left out because a must-have spec was missing."
+            : `${result.excluded_ids.length} pairs were left out because a must-have spec was missing.`}
+        </p>
+      )}
+
+      {(result.ranges.battery_hours || result.ranges.weight_g) && (
+        <section className="spans">
+          <h2>In this catalog</h2>
+          <p className="hint">Low and high are the pairs that were considered. The mark is this pick.</p>
+          {result.ranges.battery_hours && (
+            <SpanBar label="Battery" unit="h" span={result.ranges.battery_hours} sense="longer" />
+          )}
+          {result.ranges.weight_g && (
+            <SpanBar label="Weight" unit="g" span={result.ranges.weight_g} sense="heavier" />
+          )}
+        </section>
+      )}
+
+      <h2>{winner ? "Cheaper pairs that missed" : "What missed"}</h2>
+      {cheaper.length === 0 ? (
+        <p className="lede">
+          {winner ? "No cheaper pair missed the bar." : "No considered pair missed a bar."}
+        </p>
+      ) : (
+        <ul className="rejects">
+          {cheaper.map((reject) => (
+            <li key={reject.id} className="reject">
+              <ProductPhoto name={reject.name} url={result.images?.[reject.id] ?? null} size="thumb" />
+              <div>
+                <header>
+                  <strong>{reject.name}</strong>
+                  <span>{money(reject.price)}</span>
+                </header>
+                {reject.failed_bars.map((bar) => (
+                  <p key={bar.key}>{bar.message}</p>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {winner && missed > cheaper.length && (
+        <p className="hint">
+          {cheaper.length === 0
+            ? "Other pairs missed and cost the same or more."
+            : "Other pairs also missed. They cost the same or more, so they were not a cheaper way through."}
+        </p>
+      )}
+
+      {(soft.on.length > 0 || soft.off.length > 0) && (
+        <aside className="soft">
+          <strong>Nice to have</strong>
+          <p>Shown for context. They did not decide this pick.</p>
+          {soft.on.length > 0 && <p>On: {soft.on.join(", ")}</p>}
+          {soft.off.length > 0 && <p>Off: {soft.off.join(", ")}</p>}
+        </aside>
+      )}
+    </section>
+  );
+}
+
+function decisionWhy(result: EnoughOutcome): string {
+  if (!result.record.winner) return "No pair met every must-have.";
+  if (result.same_price_count > 1) {
+    return `The cheapest price that met every must-have. ${result.same_price_count} pairs tie at this price, so the earlier catalog id is shown.`;
+  }
+  return "The cheapest pair that met every must-have.";
+}
+
+function ProductPhoto({
+  name,
+  url,
+  size,
+}: {
+  name: string;
+  url: string | null;
+  size: "hero" | "thumb";
+}) {
+  const className = size === "hero" ? "photo photo-hero" : "photo photo-thumb";
+  if (url) {
+    return <img className={className} src={url} alt="" />;
+  }
+  return (
+    <div className={`${className} placeholder`} role="img" aria-label={`No catalog photo for ${name}`}>
+      <HeadphoneMark />
+      {size === "hero" && <span>No catalog photo yet</span>}
+    </div>
+  );
+}
+
+function HeadphoneMark() {
+  return (
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <path
+        d="M12 34v-6a20 20 0 0 1 40 0v6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <rect x="8" y="32" width="10" height="18" rx="3" fill="currentColor" />
+      <rect x="46" y="32" width="10" height="18" rx="3" fill="currentColor" />
+    </svg>
+  );
+}
+
+function SpanBar({
+  label,
+  unit,
+  span,
+  sense,
+}: {
+  label: string;
+  unit: string;
+  span: CatalogSpan;
+  sense: string;
+}) {
+  const width = span.high - span.low;
+  const pct = width === 0 ? 50 : ((span.winner - span.low) / width) * 100;
+  const caption = `${label} ${formatStat(span.winner)} ${unit}. Among the pairs considered, the range is ${formatStat(span.low)} to ${formatStat(span.high)} ${unit}.`;
+  return (
+    <div className="span">
+      <div className="span-top">
+        <span>{label}</span>
+        <strong>
+          {formatStat(span.winner)} {unit}
+        </strong>
+      </div>
+      <div className="track" role="img" aria-label={caption}>
+        <span className="marker" style={{ left: `${pct}%` }} />
+      </div>
+      <div className="span-ends">
+        <span>{formatStat(span.low)}</span>
+        <span>{sense}</span>
+        <span>{formatStat(span.high)}</span>
+      </div>
+    </div>
+  );
+}
+
+function formatStat(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(value);
 }
 
 function barSummary(thresholds: Thresholds): string {
