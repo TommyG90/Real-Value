@@ -1,0 +1,348 @@
+:root {
+  color-scheme: light;
+  --bg: #f3efe6;
+  --ink: #1c1915;
+  --muted: #5e584e;
+  --line: #ddd4c4;
+  --card: #fffdf8;
+  --good: #145c45;
+  --good-bg: #e5f3ec;
+  --bad: #8d3b32;
+  --bad-bg: #f8ebe7;
+  --soft: #efe6d4;
+  --shadow: 0 1px 0 rgba(28, 25, 21, 0.04);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--good);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app {
+  width: min(40rem, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 3rem;
+}
+
+.mark {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 1.25rem;
+}
+
+.mark p,
+.lede,
+.hint,
+.soft p,
+.provenance small,
+.reject p,
+.meta {
+  color: var(--muted);
+}
+
+.lede {
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.meta {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.mark strong {
+  font-family: Palatino, "Iowan Old Style", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+h1,
+h2,
+.price {
+  font-family: Palatino, "Iowan Old Style", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 1.4rem 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+fieldset {
+  margin: 0;
+  min-inline-size: 0;
+}
+
+h1 {
+  font-size: 2.1rem;
+  line-height: 1.05;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.jobs {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.job,
+.card,
+.bar,
+.reject,
+.provenance li,
+.nice li {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.job {
+  text-align: left;
+  padding: 0.9rem 1rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.job:hover,
+.job:focus-visible,
+.primary:focus-visible,
+.ghost:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--good);
+  outline-offset: 2px;
+}
+
+.job span,
+.bar legend,
+.section-label {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.job strong {
+  display: block;
+  margin: 0.15rem 0;
+  font-size: 1.15rem;
+}
+
+.job em {
+  font-style: normal;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.ghost,
+.primary {
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.primary {
+  background: var(--ink);
+  color: #f7f3ea;
+  border: 0;
+  width: 100%;
+  margin-top: 0.9rem;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.bars {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.bar {
+  padding: 0.75rem 0.85rem;
+}
+
+.bar label,
+.check {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--good);
+}
+
+.bar input[type="number"] {
+  width: 7rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+}
+
+.soft {
+  margin-top: 0.9rem;
+  background: var(--soft);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+}
+
+.soft ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.card {
+  padding: 1rem;
+}
+
+.winner {
+  background: var(--good-bg);
+  border-color: #b7d8c8;
+}
+
+.price {
+  font-size: 2.6rem;
+  margin: 0.15rem 0;
+  line-height: 1;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--good);
+  font-weight: 700;
+}
+
+.empty .kicker {
+  color: var(--bad);
+}
+
+.rejects,
+.provenance,
+.nice {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.reject,
+.provenance li,
+.nice li {
+  padding: 0.75rem 0.85rem;
+}
+
+.reject header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.reject header span {
+  font-variant-numeric: tabular-nums;
+}
+
+.reject p,
+.provenance p,
+.nice p {
+  margin: 0.25rem 0 0;
+}
+
+.fail {
+  color: var(--bad);
+}
+
+.json {
+  margin-top: 0.8rem;
+}
+
+.json pre {
+  overflow: auto;
+  max-height: 16rem;
+  background: #231f1a;
+  color: #f4ecdf;
+  border-radius: 12px;
+  padding: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.row-actions .ghost,
+.row-actions .primary {
+  width: auto;
+  margin: 0;
+}
+
+.copied {
+  color: var(--good);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 720px) {
+  .jobs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  h1 {
+    font-size: 2.6rem;
+  }
+}
