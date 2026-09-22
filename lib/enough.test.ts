@@ -26,6 +26,9 @@ test("csv is the 23-SKU catalog", () => {
   assert.equal(rows.length, 23);
   assert.equal(seed.eligible.length, 23);
   assert.deepEqual(seed.excluded, []);
+  const cited = products.filter((item) => item.attrs.anc_cited?.value === true);
+  assert.equal(cited.length, 17);
+  assert.equal(products.length - cited.length, 6);
   assert.equal(
     products.some((item) => item.sku_id.startsWith("fixture-")),
     false,
@@ -53,7 +56,7 @@ test("commute requires a cite and skips the empty-cite $40 pairs", () => {
   assert.equal(result.record.thresholds.anc_cited, true);
   assert.equal(result.record.winner?.id, "earfun-wave-pro");
   assert.equal(result.record.winner?.price, 79.99);
-  assert.equal(result.cleared, 7);
+  assert.equal(result.cleared, 10);
   assert.equal(result.record.provenance.find((item) => item.attr_key === "anc_cited")?.value, true);
   for (const id of ["edifier-wh700nb", "tozo-ht2"]) {
     const missed = reject(result, id);
@@ -80,7 +83,7 @@ test("travel requires a cite and does not crown TOZO HT2", () => {
   assert.equal(result.record.thresholds.anc_cited, true);
   assert.equal(result.record.winner?.id, "earfun-wave-pro");
   assert.equal(result.record.winner?.price, 79.99);
-  assert.equal(result.cleared, 8);
+  assert.equal(result.cleared, 11);
   const tozo = reject(result, "tozo-ht2");
   const wh = reject(result, "edifier-wh700nb");
   assert.ok(tozo?.failed_bars.some((bar) => bar.key === "anc_cited"));
