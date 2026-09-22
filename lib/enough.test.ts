@@ -138,7 +138,12 @@ test("ranges are the considered catalog and blank photos stay blank", () => {
   assert.equal(result.ranges.battery_hours?.high, 65);
   assert.equal(result.ranges.weight_g?.low, 193);
   assert.equal(result.ranges.weight_g?.high, 296);
-  assert.equal(result.image_url, null);
+  assert.equal(result.image_url, winner.image_url);
+  assert.match(result.image_url ?? "", /^https:\/\//);
+  assert.equal(
+    products.filter((item) => item.image_url?.startsWith("https://")).length,
+    23,
+  );
   assert.ok(result.fail_reasons.includes("missing cited ANC"));
   const why = whyLine(result);
   assert.match(why, /^Cheapest that cleared every required bar/);

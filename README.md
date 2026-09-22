@@ -43,7 +43,7 @@ Presets live in `data/seed/job_presets.json`, not in the React tree. Soft defaul
 Data lands in `data/seed/headphones.csv`. Headers:
 
 ```text
-sku_id,name,brand,asin,bestbuy_sku,street_price_usd,street_price_source,street_price_as_of,anc,anc_source,anc_as_of,anc_quality_cite_url,anc_quality_note,battery_hours,battery_hours_source,battery_hours_as_of,weight_g,weight_g_source,weight_g_as_of,bluetooth,bluetooth_source,bluetooth_as_of,wired_3_5mm,wired_3_5mm_source,wired_3_5mm_as_of,call_mic,call_mic_source,call_mic_as_of,warranty_years,warranty_years_source,warranty_years_as_of,foldable,foldable_source,foldable_as_of
+sku_id,name,brand,asin,bestbuy_sku,street_price_usd,street_price_source,street_price_as_of,anc,anc_source,anc_as_of,anc_quality_cite_url,anc_quality_note,battery_hours,battery_hours_source,battery_hours_as_of,weight_g,weight_g_source,weight_g_as_of,bluetooth,bluetooth_source,bluetooth_as_of,wired_3_5mm,wired_3_5mm_source,wired_3_5mm_as_of,call_mic,call_mic_source,call_mic_as_of,warranty_years,warranty_years_source,warranty_years_as_of,foldable,foldable_source,foldable_as_of,image_url,image_source_url,image_rights,image_as_of
 ```
 
 Must-haves are street price, ANC, battery hours, weight, Bluetooth, wired 3.5 mm, call mic, warranty years, and foldable, each with `source` and `as_of`. `anc_quality_cite_url` and `anc_quality_note` are optional and are not scores. At catalog load, `anc_cited` is true only when that cite URL is non-empty after trim. Commute and Travel require it. An empty cite fails that bar and stays in the catalog. A blank must-have excludes that SKU from Enough.
@@ -52,7 +52,7 @@ The file is the validated 23-SKU catalog. Every row has the must-have attributes
 
 ## Photos
 
-The CSV may include an optional `image_url` column. It is not a must-have, and the locked header list does not require it. A missing or blank cell shows initials and “No photo”. A value must be an `https://` URL or a path under `public/` such as `/catalog/earfun-wave-pro.jpg`, and only when that file is a real product photo. Do not add stock or invented images. `anc_quality_cite_url`, when present, is a “lab cite” link. It is never shown as a numeric ANC score.
+`image_url` is optional for the decision. A missing or blank cell shows initials and “No photo”. The current catalog fills it for all 23 SKUs. `image_rights` is `prototype_hotlink`: fine to display from the source URL, not cleared to download and re-host. `anc_quality_cite_url`, when present, is a “lab cite” link. It is never shown as a numeric ANC score.
 
 Apply the schema, then load the CSV and presets:
 

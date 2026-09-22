@@ -50,6 +50,10 @@ export const CSV_HEADERS = [
   "foldable",
   "foldable_source",
   "foldable_as_of",
+  "image_url",
+  "image_source_url",
+  "image_rights",
+  "image_as_of",
 ] as const;
 
 export function seedPath(name: string): string {
